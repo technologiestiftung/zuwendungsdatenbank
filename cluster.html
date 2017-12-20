@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <title></title>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+
+<style>
+    rect {
+        stroke: white;
+        fill: #05668D;
+        opacity: 0.3;
+        stroke-width: 2px;
+    }
+
+    text{
+      font-family: Arial, sans-serif;
+      font-size:10px;
+    }
+</style>
+
+<svg width="1200px" height="1000px">
+    <g></g>
+</svg>
+
+<script>
+    var vWidth = 1000;
+    var vHeight = 600;
+
+    // Prepare our physical space
+    var g = d3.select('svg').select('g');
+
+        // Get the data from our CSV file
+    d3.json('data/columns/geber.json', function(error, data) {
+        if (error) throw error;
+
+        data.forEach(function(d,i){
+          data[i].id = i;
+          data[i].parentId = data.length;
+        });
+
+        data.push({
+          key:'',
+          id:data.length,
+          parentId:null,
+          years:[0,0,0,0,0,0,0]
+        });
+
+        console.log(data)
+
+        vData = d3.stratify()(data);
+        drawViz(vData);
+    });
+
+    function drawViz(vData) {
+        // Declare d3 layout
+        var vLayout = d3.treemap().size([vWidth, vHeight]).paddingOuter(5);
+
+        // Layout + Data
+        var vRoot = d3.hierarchy(vData).sum(function (d) { console.log(d); return d.data.years[3]; });
+        var vNodes = vRoot.descendants();
+        vLayout(vRoot);
+        var vSlices = g.selectAll('rect').data(vNodes).enter().append('rect');
+        var vLabels = g.selectAll('text').data(vNodes).enter().append('text');
+
+        // Draw on screen
+        vSlices.attr('x', function (d) { return d.x0; })
+            .attr('y', function (d) { return d.y0; })
+            .attr('width', function (d) { return d.x1 - d.x0; })
+            .attr('height', function (d) { return d.y1 - d.y0; });
+
+        vLabels.attr('x', function (d) { return d.x0; })
+            .attr('y', function (d) { return d.y0; })
+            .attr('dy', 15)
+            .attr('dx', 5)
+            .text(function (d) { return d.data.data.key; });
+    }
+</script>
