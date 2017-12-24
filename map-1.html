@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <title></title>
+    <script src="topojson-client.js"></script>
+    <script src="d3.v4.min.js"></script>
+</head>
+
+<style>
+    canvas{
+        width:1000px;
+        height:1000px;
+    }
+</style>
+<canvas width="4000" height="4000"></canvas>
+
+<script>
+    // Prepare our physical space
+    var canvas = d3.select('canvas'),
+        context = canvas.node().getContext("2d"),
+        width = 4000,
+        height = 4000;
+
+    var projection = d3.geoMercator()
+          .center([13.48, 52.51])
+          .scale(240000)
+          .translate([width / 2, height / 2]),
+        path = d3.geoPath().projection(projection).context(context),
+        color = {
+            C:'red',
+            D:'blue'
+        };
+
+        // Get the data from our CSV file
+    d3.csv('data/codings-convert.csv', function(error, data) {
+        if (error) throw error;
+
+        data.forEach(function(d){
+            var xy = projection([d.LON,d.LAT]);
+            context.fillStyle = color[d.fundingArea];
+            context.beginPath();
+            context.arc(xy[0], xy[1], 0.5, 0, 2 * Math.PI);
+            context.fill();
+        });
+
+        d3.json("data/Planungsraum.topojson", function(error, topo) {
+          if (error) throw error;
+
+          context.fillStyle = 'transparent';
+          context.strokeStyle = 'rgba(0,0,0,0.5)';
+          context.beginPath();
+          path(topojson.mesh(topo));
+          context.stroke();
+        });
+
+        /*d3.json("data/plz.json", function(error, geojson) {
+          if (error) throw error;
+
+          context.fillStyle = 'transparent';
+          context.strokeStyle = 'rgba(0,0,0,0.5)';
+          context.beginPath();
+          path(geojson);
+          context.stroke();
+        });*/
+    });
+</script>

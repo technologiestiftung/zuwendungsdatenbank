@@ -10,10 +10,12 @@ let dsvParse = d3.dsvFormat(';')
 
 let data = dsvParse.parse(fs.readFileSync('data/HKO_2017_EPSG5650.txt', 'utf8'))
 
-let coord = proj(proj1, proj2, [convertNumber(data[0].LON), convertNumber(data[0].LAT)])
-
 function getFunding(id){
-	http.get('http://www.businesslocationcenter.de/foerdergebiete/2014/suche?format=json&street='+encodeURI(data[id].STN)+'&number='+data[id].HNR+'&zipcode='+data[id].PLZ, (res) => {
+	let coord = proj(proj1, proj2, [convertNumber(data[id].LON), convertNumber(data[id].LAT)])
+	data[id].LON = coord[0]
+	data[id].LAT = coord[1]
+
+	http.get('http://www.businesslocationcenter.de/foerdergebiete/2014/suche?format=json&street='+encodeURI(data[id].STN)+'&number='+data[id].HNR+data[id].ADZ+'&zipcode='+data[id].PLZ, (res) => {
 	  const { statusCode } = res;
 	  const contentType = res.headers['content-type'];
 

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <title></title>
+    <script src="d3.v4.min.js"></script>
+</head>
+
+<style>
+    text{
+      font-family: Arial, sans-serif;
+      font-size:10px;
+    }
+    ul{
+        position: fixed;
+        top:50px;
+        left:20px;
+    }
+    li.active{
+        font-weight: bold;
+    }
+</style>
+<div id="button" style="position: fixed; top:5px;left:5px;">
+<button id="mode">Anzahl</button>
+<button id="rel">Jahr</button>
+<button id="abs">Absolut</button>
+<button id="back">Zurück</button>
+<button id="next">Weiter</button>
+</div>
+<svg width="800px" height="800px">
+    <g></g>
+</svg>
+
+<script>
+    var width = 1000,
+        height = 600,
+        years = [2009,2016],
+        year = years[0],
+        mode = 'count',
+        rel = 'year',
+        abs = 'abs';
+
+
+    // Prepare our physical space
+    var g = d3.select('svg').select('g');
+
+    d3.select('#mode').on('click', function(){
+        if(mode == 'count'){
+            mode = 'money';
+            d3.select(this).text('Betrag');
+        }else{
+            mode = 'count';
+            d3.select(this).text('Anzahl');
+        }
+        updateMap();
+    });
+
+    d3.select('#next').on('click', function(){
+        if(year < years[1]){
+            year++;
+        }
+        updateYears();
+        updateMap();
+    });
+
+    d3.select('#back').on('click', function(){
+        if(year > years[0]){
+            year--;
+        }
+        updateYears();
+        updateMap();
+    });
+
+    d3.select('#abs').on('click', function(){
+        if(abs == 'abs'){
+            abs = 'rel';
+            d3.select(this).text('Relative');
+        }else{
+            abs = 'abs';
+            d3.select(this).text('Absolut');
+        }
+        updateMap();
+    });
+
+    d3.select('#rel').on('click', function(){
+        if(rel == 'year'){
+            rel = 'sum';
+            d3.select(this).text('Summe');
+        }else{
+            rel = 'year';
+            d3.select(this).text('Jahr');
+        }
+        updateMap();
+    });
+
+    var colors;
+
+    var yearData = [];
+    for(var i = years[0]; i <= years[1]; i++){
+        yearData.push(i)
+    }
+
+    d3.select('body').append('ul').selectAll('li').data(yearData).enter().append('li')
+        .text(function(d){ return d; })
+        .classed('active', function(d,i){ return (i==0)?true:false })
+        .on('click', function(d){
+            year = d;
+            updateYears();
+            updateMap();
+        });
+
+    function updateYears(){
+        d3.selectAll('li').classed('active',false);
+        d3.select('li:nth-child('+(year-years[0]+1)+')').classed('active',true);
+    }
+
+    var projection = d3.geoMercator()
+          .center([13.48, 52.51])
+          .scale(60000)
+          .translate([width / 2, height / 2]),
+        path = d3.geoPath().projection(projection),
+        postcodes;
+
+        // Get the data from our CSV file
+    d3.json('data/plz_w_data.geojson', function(error, data) {
+        if (error) throw error;
+
+        colors = {
+            sum:{
+                money:d3.scaleLinear().domain([0,d3.max(data.features, function(d){ return d.properties.money; })]).range(['blue','red']),
+                count:d3.scaleLinear().domain([0,d3.max(data.features, function(d){ return d.properties.count; })]).range(['blue','red'])
+            },
+            year:{
+                abs:{
+                    money:d3.scaleLinear().domain([0,d3.max(data.features, function(d){ return d3.max(d.properties.years, function(d){ return d.money; })})]).range(['blue','red']),
+                    count:d3.scaleLinear().domain([0,d3.max(data.features, function(d){ return d3.max(d.properties.years, function(d){ return d.count; })})]).range(['blue','red'])
+                },
+                rel:[]
+            }  
+        };
+
+        for(var i = 0; i<=(years[1]-years[0]); i++){
+            colors.year.rel.push({
+                money:d3.scaleLinear().domain([0,d3.max(data.features, function(d){ return d.properties.years[i].money; })]).range(['blue','red']),
+                count:d3.scaleLinear().domain([0,d3.max(data.features, function(d){ return d.properties.years[i].count; })]).range(['blue','red'])
+            });
+        }
+
+        postcodes = g.selectAll('path').data(data.features).enter().append('path')
+            .attr('d',path)
+            .style('stroke-width', 0.5)
+            .style('stroke','rgba(255,255,255,0.3)');
+        
+        updateMap();
+        
+    });
+
+    function updateMap(){
+        postcodes.transition().style('fill', function(d){
+            if(rel == 'sum'){
+                return colors[rel][mode](d.properties[mode]);
+            }else{
+                if(abs == 'abs'){
+                    return colors[rel].abs[mode](d.properties.years[year-years[0]][mode]);
+                }else{
+                    return colors[rel].rel[year-years[0]][mode](d.properties.years[year-years[0]][mode]);
+                }
+            }
+        });
+    }
+</script>

@@ -11,3 +11,10 @@ http://fbinter.stadt-berlin.de/fb/berlin/service.jsp?id=a_adressenberlin@senstad
 1. clean.js
 2. Open in Excel and Save as UTF8-CSV (yes, don't ask me why - it works)
 3. cluster.js
+
+## TODO
+
+recheck all with ADZ and unknown
+
+
+Cross-Filter and Facetted Browsing  
