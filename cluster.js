@@ -6,38 +6,40 @@ let fs = require('fs'),
 	fuzzy = require('fuzzyset.js')
 
 function cleanCol(str){
-	let a = [
-		['Str.','Straße'],
-		['str.','straße'],
-		['Strasse','Straße'],
-		['strasse','straße']
-	]
+	if(str != undefined){
+		let a = [
+			['Str.','Straße'],
+			['str.','straße'],
+			['Strasse','Straße'],
+			['strasse','straße']
+		]
 
-	a.forEach(a=>{
-		while(str.indexOf(a[0])>=0){
-			str = str.replace(a[0],a[1])
-		}
-	})
+		a.forEach(a=>{
+			while(str.indexOf(a[0])>=0){
+				str = str.replace(a[0],a[1])
+			}
+		})
 
-	//space after StraßeNUM
-	let streets = ['Straße','straße']
-	streets.forEach(s=>{
-		for(let n = 0; n<=9; n++){
-			str = str.replace(s+n, s+' '+n)
-		}
-	})
+		//space after StraßeNUM
+		let streets = ['Straße','straße']
+		streets.forEach(s=>{
+			for(let n = 0; n<=9; n++){
+				str = str.replace(s+n, s+' '+n)
+			}
+		})
+	}
 
 	return str
 }
 
-let merges = 0, yearRange = [2009,2016], merger = [
+let merges = 0, yearRange = [2009,2016], merger = {geber:[
 	['Senatsverwaltung für Justiz','Senatsverwaltung für Justiz und Verbraucherschutz'],
 	['Senatsverwaltung für Stadtentwicklung und Umwelt','Senatsverwaltung für Stadtentwicklung','Senatsverwaltung für Gesundheit, Umwelt und Verbraucherschutz'],
 	['Senatsverwaltung für Wirtschaft, Technologie und Forschung','Senatsverwaltung für Wirtschaft, Technologie und Frauen'],
 	['Senatsverwaltung für Bildung, Jugend und Wissenschaft','Senatsverwaltung für Bildung, Wissenschaft und Forschung'],
 	['Senatsverwaltung für Gesundheit und Soziales','Senatsverwaltung für Gesundheit, Umwelt und Verbraucherschutz'],
 	['Senatsverwaltung für Integration, Arbeit und Soziales','Senatsverwaltung für Arbeit, Integration und Frauen']
-]
+]}, mergeKeys = {}
 
 function cleanRegEx(str){
 	let a = ['.',')','(']
@@ -57,7 +59,7 @@ function cleanData(fileName){
 	}).then(data => {
 		let csv = dsvParse.parse(data)
 
-		var cols = ["geber","art","politikbereich","name"],
+		var cols = ["geber","art","politikbereich","city","plz","empfaengerid"], //name
 			tests = {},
 			colCluster = {},
 			clusterKeys = {}
@@ -67,7 +69,9 @@ function cleanData(fileName){
 			clusterKeys[col] = {}
 		})
 
-		csv.forEach(c => {
+		csv.forEach((c,ci) => {
+			console.log(ci,csv.length)
+
 			let m = parseInt(c.betrag)
 				if(isNaN(m)){
 					m = 0
@@ -78,51 +82,64 @@ function cleanData(fileName){
 				}
 			cols.forEach(col => {
 				let v = cleanCol(c[col])
-				console.log(col,v)
+				//console.log(col,v)
+				if(v != undefined){
 
-				if(v in clusterKeys[col]){
-					colCluster[col][clusterKeys[col][v]].count++
-					colCluster[col][clusterKeys[col][v]].money += m
-					colCluster[col][clusterKeys[col][v]].years[y-yearRange[0]].money += m
-					colCluster[col][clusterKeys[col][v]].years[y-yearRange[0]].count++
-				}else{
-
-					let f = fuzzy(tests[col]),
-						r = f.get(v)
-
-					if(r && r[0][0] > 0.9){
-						merges++
-
-						let match1 = data.match(new RegExp(cleanRegEx(v), 'g')),
-							match2 = data.match(new RegExp(cleanRegEx(r[0][1]), 'g'))
-
-						if(match1 > match2){
-							colCluster[col][clusterKeys[col][r[0][1]]].key = v
-						}
-
-						colCluster[col][clusterKeys[col][r[0][1]]].count++
-						colCluster[col][clusterKeys[col][r[0][1]]].money += m
-						colCluster[col][clusterKeys[col][r[0][1]]].years[y-yearRange[0]].money += m
-						colCluster[col][clusterKeys[col][r[0][1]]].years[y-yearRange[0]].count++
-						clusterKeys[col][v] = clusterKeys[col][r[0][1]]
-
+					if(v in clusterKeys[col]){
+						clusterKeys[col][v].c++
+						colCluster[col][clusterKeys[col][v].i].count++
+						colCluster[col][clusterKeys[col][v].i].money += m
+						colCluster[col][clusterKeys[col][v].i].years[y-yearRange[0]].money += m
+						colCluster[col][clusterKeys[col][v].i].years[y-yearRange[0]].count++
 					}else{
-						tests[col].push(v)
 
-						colCluster[col].push({
-							key:v,
-							count:1,
-							money:m,
-							years:[]
-						})
+						let f = null, r = false
 
-						clusterKeys[col][v] = colCluster[col].length-1
-						for(var year = 0; year <= yearRange[1]-yearRange[0]; year++){
-							colCluster[col][clusterKeys[col][v]].years.push({count:0,money:0})
+						if(col != 'plz' && col != 'empfaengerid'){
+							f = fuzzy(tests[col])
+							r = f.get(v)
 						}
 
-						colCluster[col][clusterKeys[col][v]].years[y-yearRange[0]].money += m
-						colCluster[col][clusterKeys[col][v]].years[y-yearRange[0]].count++
+						if(r && r[0][0] > 0.8){
+							merges++
+
+							let match1 = data.match(new RegExp(cleanRegEx(v), 'g')),
+								match2 = data.match(new RegExp(cleanRegEx(r[0][1]), 'g'))
+
+							if(match1 > match2){
+								colCluster[col][clusterKeys[col][r[0][1]].i].key = v
+							}
+
+							colCluster[col][clusterKeys[col][r[0][1]].i].count++
+							colCluster[col][clusterKeys[col][r[0][1]].i].money += m
+							colCluster[col][clusterKeys[col][r[0][1]].i].years[y-yearRange[0]].money += m
+							colCluster[col][clusterKeys[col][r[0][1]].i].years[y-yearRange[0]].count++
+							if(v in clusterKeys[col]){
+								clusterKeys[col][v].values.push(v)
+								clusterKeys[col][v].c++
+							}else{
+								tests[col].push(v)
+								clusterKeys[col][v] = {i:clusterKeys[col][r[0][1]].i,values:[v], c:1}
+							}
+
+						}else{
+							tests[col].push(v)
+
+							colCluster[col].push({
+								key:v,
+								count:1,
+								money:m,
+								years:[]
+							})
+
+							clusterKeys[col][v] = {i:colCluster[col].length-1, values:[v], c:1}
+							for(var year = 0; year <= yearRange[1]-yearRange[0]; year++){
+								colCluster[col][clusterKeys[col][v].i].years.push({count:0,money:0})
+							}
+
+							colCluster[col][clusterKeys[col][v].i].years[y-yearRange[0]].money += m
+							colCluster[col][clusterKeys[col][v].i].years[y-yearRange[0]].count++
+						}
 					}
 				}
 			})
@@ -141,6 +158,8 @@ function cleanData(fileName){
 			})), 'utf8')
 		})
 
+		fs.writeFileSync('data/clusterKeys.json', JSON.stringify(clusterKeys), 'utf8')
+
 		console.log('Merges', merges)
 
 	}, error => console.log(error)).catch(err => {
@@ -148,4 +167,4 @@ function cleanData(fileName){
 	})
 }
 
-cleanData('data/all_clean_excel.csv')
+cleanData('data/all_clean_excel_w_plz.csv')
