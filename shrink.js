@@ -6,7 +6,7 @@ let json = JSON.parse(fs.readFileSync('data/clusterKeys.json', 'utf8')),
 	csv = dsvParse.parse(fs.readFileSync('data/all_clean_excel_w_plz.csv', 'utf8'))
 
 
-let keep = ['jahr','geber','politikbereich','betrag','plz','name']
+let keep = ['jahr','geber','politikbereich','betrag','plz','name','zweck']
 
 let ncsv = ''
 

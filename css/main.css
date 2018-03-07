@@ -1,0 +1,277 @@
+body{
+  font-family:Helvetica, Arial, sans-serif; 
+  font-size:12px;
+}
+
+#geberChart{
+  width:50%;
+  float:left;
+}
+
+#artChart{
+  width:50%;
+  float:left;
+}
+
+#yearChart,
+#mapChart{
+  margin:0;
+  padding:0;
+  float:left;
+  height:400px;
+  width:50%;
+}
+
+#mapChart{
+  text-align: center;
+}
+
+#mapChart svg{
+  max-width:100%;
+}
+
+.dateChart .tick line{
+  stroke:rgba(0,0,0,0.5);
+}
+
+.dateChart .xaxis path,
+.dateChart .xaxis line{
+  display: none;
+}
+
+.dateChart .yaxis path{
+  display: none;
+}
+
+text{
+  font-size:10px;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+rect.sumbg, rect.bg, rect.bars{
+  fill:rgba(0,0,0,0.1);
+}
+
+#preview{
+  clear:both;
+}
+
+table, td, tr, th, tfoot, tbody, thead{
+  margin:0;
+  padding:0;
+  border:0;
+}
+
+table{
+  width:100%;
+}
+
+td, th{padding: 4px 10px 4px 0; text-align:left;}
+td.betrag,
+th.betrag{
+  text-align:right;
+}
+
+thead th{
+  border-bottom:2px solid #000;
+}
+
+tfoot th{
+  border-top:2px solid #000;
+}
+
+tbody tr:nth-child(even){
+  background-color:rgba(0,0,0,0.05);
+}
+
+tbody tr:hover{
+  color:rgba(45,145,210,1);
+}
+
+td{
+  padding: 4px 4px;
+}
+
+.pagination{
+  clear:both;
+  float:left;
+  width:100%;
+  text-align: center;
+  padding:20px 0 50px 0;
+}
+
+#pagination{
+  padding-bottom:20px;
+}
+
+.pagination{
+  clear:both;
+}
+
+.pagination a{
+  cursor: pointer;
+}
+
+.pagination a:hover{
+  color:#3974FF;
+}
+
+.next{
+  padding-left:15px;
+  font-weight:bold;
+}
+
+.prev{
+  padding-right:15px;
+  font-weight:bold;
+}
+
+#search{
+  clear:both;
+  font-size:24px;
+  width:100%;
+  padding:5px 0;
+  text-indent: 10px;
+  background-size:40px 26px;
+  background-position: right;
+  background-image:url('../images/search@2x.png');
+  background-repeat: no-repeat;
+  border:1px solid rgba(0,0,0,0.3);
+  outline: none;
+}
+
+#sumChart{
+  clear:both;
+  width:100%;
+  text-align:center;
+  font-size:24px;
+  padding:40px 0 20px 0;
+}
+
+#sumChart span span{
+  font-size:12px;
+}
+
+#container{
+  width:90%;
+  margin:0 auto;
+  max-width:1280px;
+}
+
+#maprow{
+  clear:both;
+  width:100%;
+}
+
+#maprow>div{
+  width:25%;
+  float:left;
+  height:300px;
+}
+
+#maprow>div svg{
+  width:100%;
+  height:100%;
+}
+
+.year-title{
+  display: block;
+  width:100%;
+  text-align: center;
+}
+
+.dateChart rect{
+  fill:#000;
+}
+
+.dateChart.hasSelection rect{
+  fill:#AAA;
+}
+
+.mapChart path.overlays{
+  stroke:transparent;
+  -webkit-transition: stroke 0.2s;
+  transition: stroke 0.2s;
+  -webkit-transition-timing-function: ease-out;
+  transition-timing-function: ease-out;
+}
+
+.dateChart rect{  
+  -webkit-transition: fill 0.2s;
+  transition: fill 0.2s;
+  -webkit-transition-timing-function: ease-out;
+  transition-timing-function: ease-out;
+}
+
+.dateChart rect:hover,
+.dateChart rect.selected{
+  -webkit-transition: fill 0s;
+  transition: fill 0s;
+  fill:rgba(45,145,210,1) !important;
+  cursor: pointer;
+}
+
+.mapChart path.overlays:hover,
+.mapChart path.overlays.selected{
+  -webkit-transition: stroke 0s;
+  transition: stroke 0s;
+  stroke:rgba(45,145,210,1) !important;
+  cursor: pointer;
+}
+
+g.matrixGroup.selected rect.bg,
+g.matrixGroup:hover rect.bg{ 
+  fill:rgba(45,145,210,0.3);
+}
+
+g.matrixGroup.selected rect.bar,
+g.matrixGroup:hover rect.bar{ 
+  fill:rgba(45,145,210,1); 
+}
+
+g.matrixGroup.selected rect.sumbar,
+g.matrixGroup:hover rect.sumbar{
+  fill:rgba(45,145,210,1);
+}
+
+svg.hasSelection rect.sumbar,
+svg.hasSelection rect.bar{
+  fill:#AAA;
+}
+
+g.matrixGroup.selected text,
+g.matrixGroup:hover text{
+  fill:rgba(45,145,210,1);
+}
+
+.matrixChart rect.button{
+  cursor: pointer;
+  fill:transparent;
+  stroke:transparent;
+}
+
+.sort-d-label, .sort-d-ilabel,
+.sort-d-sum, .sort-d-isum{
+  display: none;
+}
+
+.matrixChart.isum .sort-d-isum,
+.matrixChart.sum .sort-d-sum,
+.matrixChart.ilabel .sort-d-ilabel,
+.matrixChart.label .sort-d-label{
+  fill:rgba(45,145,210,1);
+  display: block;
+  font-weight: bold;
+}
+
+.matrixChart.label .sort-label,
+.matrixChart.ilabel .sort-label,
+.matrixChart.isum .sort-sum,
+.matrixChart.sum .sort-sum{
+  fill:rgba(45,145,210,1);
+}
+
+/*.matrixChart g:hover rect{
+  stroke:red !important;
+}
+*/

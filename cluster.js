@@ -59,7 +59,7 @@ function cleanData(fileName){
 	}).then(data => {
 		let csv = dsvParse.parse(data)
 
-		var cols = ["geber","art","politikbereich","city","plz","empfaengerid"], //name
+		var cols = ["geber","art","politikbereich","city","plz","empfaengerid","zweck","name"], //name
 			tests = {},
 			colCluster = {},
 			clusterKeys = {}

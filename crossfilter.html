@@ -34,6 +34,10 @@ body{
   margin-left:100px;
 }
 
+.dateChart .tick line{
+  stroke:rgba(0,0,0,0.5);
+}
+
 .dateChart .xaxis path,
 .dateChart .xaxis line{
   display: none;
@@ -82,6 +86,10 @@ tfoot th{
 
 tbody tr:nth-child(even){
   background-color:rgba(0,0,0,0.05);
+}
+
+tbody tr:hover{
+  color:rgba(45,145,210,1);
 }
 
 .pagination{
@@ -172,15 +180,58 @@ tbody tr:nth-child(even){
   text-align: center;
 }
 
+.dateChart rect{
+  fill:#000;
+}
+
+.dateChart.hasSelection rect{
+  fill:#AAA;
+}
+
+.mapChart path.overlays{
+  stroke:transparent;
+  -webkit-transition: stroke 0.2s;
+  transition: stroke 0.2s;
+  -webkit-transition-timing-function: ease-out;
+  transition-timing-function: ease-out;
+}
+
+.dateChart rect{  
+  -webkit-transition: fill 0.2s;
+  transition: fill 0.2s;
+  -webkit-transition-timing-function: ease-out;
+  transition-timing-function: ease-out;
+}
+
+.dateChart rect:hover,
+.dateChart rect.selected{
+  -webkit-transition: fill 0s;
+  transition: fill 0s;
+  fill:rgba(45,145,210,1) !important;
+  cursor: pointer;
+}
+
+.mapChart path.overlays:hover,
+.mapChart path.overlays.selected{
+  -webkit-transition: stroke 0s;
+  transition: stroke 0s;
+  stroke:rgba(45,145,210,1) !important;
+  cursor: pointer;
+}
+
+/*.matrixChart g:hover rect{
+  stroke:red !important;
+}
+*/
 </style>
 </head>
 <body>
   <div id="container">
+    <div id="sumChart"></div>
     <div id="yearChart"></div>
     <div id="mapChart"></div>
     <div id="geberChart"></div>
     <div id="artChart"></div>
-    <div id="sumChart"></div>
     <div id="maprow">
     </div>
     <input type="text" id="search" placeholder="Namens-Suche" />
@@ -196,6 +247,7 @@ tbody tr:nth-child(even){
           <th>Name</th>
           <th>Bereich</th>
           <th>Geber</th>
+          <th>Zweck</th>
           <th class="betrag">Summe</th>
         </tr>
       </thead>
@@ -208,6 +260,7 @@ tbody tr:nth-child(even){
           <th>Name</th>
           <th>Bereich</th>
           <th>Geber</th>
+          <th>Zweck</th>
           <th class="betrag">Summe</th>
         </tr>
       </tfoot>
@@ -239,6 +292,7 @@ var yearChart = function(_container, _dates, _filterFunction, _filterKey){
   var module = {},
     filterFunction = _filterFunction,
     filterKey = _filterKey,
+    filters = [],
     init = true,
     container = _container,
     dates = _dates,
@@ -265,21 +319,21 @@ var yearChart = function(_container, _dates, _filterFunction, _filterKey){
     chart;
 
   module.init = function(){
+    y_axis = g.append('g').classed('yaxis',true).attr('transform', 'translate(-'+padding+',0)');
+    x_axis = g.append('g').classed('xaxis',true);
+
     chart = g.selectAll('rect').data(dates.all()).enter().append('rect')
-      .style('fill','#000')
       .on('click', function(d){
         filterFunction(filterKey, d.key);
       });
-      
-
-    y_axis = g.append('g').classed('yaxis',true).attr('transform', 'translate(-'+padding+',0)');
-    x_axis = g.append('g').classed('xaxis',true);
 
     module.resize();
   };
 
-  module.data = function(_dates){
+  module.data = function(_dates, _filters){
     dates = _dates;
+    filters = _filters;
+    svg.classed('hasSelection', ((filters.length>0)?true:false));
     module.update();
   };
 
@@ -287,15 +341,26 @@ var yearChart = function(_container, _dates, _filterFunction, _filterKey){
     dates = _dates;
     y.domain([0, d3.max(dates.all(), function(d){ return d.value;})]);
 
-    chart.data(dates.all()).transition()
-      .duration((init)?0:500)
-      .attr('x',function(d,i){ return x(d.key); })
-      .attr('y',function(d,i){ return y(d.value); })
-      .attr('width',function(d,i){ return barWidth; })
-      .attr('height',function(d,i){ return height-2*padding-yOffset-y(d.value); });
+    chart.data(dates.all())
+      .classed('selected', function(d){
+        if(filters.indexOf(d.key)>-1){
+          return true;
+        }
+        return false;
+      })
+      .transition().duration((init)?0:500)
+        .attr('x',function(d,i){ return x(d.key); })
+        .attr('y',function(d,i){ return y(d.value); })
+        .attr('width',function(d,i){ return barWidth; })
+        .attr('height',function(d,i){ return height-2*padding-yOffset-y(d.value); });
 
-    y_axis.call(yAxis);
-    x_axis.call(xAxis);
+    y_axis.transition()
+      .duration((init)?0:500)
+      .call(yAxis);
+
+    x_axis.transition()
+      .duration((init)?0:500)
+      .call(xAxis);
 
     init = false;
   };
@@ -310,6 +375,8 @@ var yearChart = function(_container, _dates, _filterFunction, _filterKey){
 
     svg.attr('width',width);
     svg.attr('height',height);
+
+    yAxis.tickSize(-(width - padding - xOffset - barWidth), 0, 0);
 
     x_axis.attr('transform', 'translate('+barWidth/2+','+(height-2*padding-yOffset)+')');
 
@@ -329,12 +396,14 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
     container = _container,
     labels = _labels,
     data = _data,
+    filters = [],
     dict = _dict,
     dict_keys = {},
     init = true,
+    root = 1/4,
     width,height,blockWidth,blockHeight=25,padding=10,xOffset = 150, yOffset = 10,
-    svg = container.append('svg').classed('dateChart', true),
-    y = d3.scaleLinear().domain([0,data.top(1)[0].value]),
+    svg = container.append('svg').classed('matrixChart', true),
+    y = d3.scaleLinear().domain([0,Math.pow(data.top(1)[0].value, root)]),
     xLabels = svg.append('g').attr('transform','translate('+(padding+xOffset)+','+padding+')'),
     yLabels = svg.append('g').attr('transform','translate('+padding+','+(padding+yOffset)+')').selectAll('text').data(labels.all()).enter().append('text')
       .attr('x', xOffset-padding)
@@ -344,7 +413,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
       }),
     years = [],
     sums = [],
-    sumw = d3.scaleLinear().domain([0,labels.top(1)[0].value]),
+    sumw = d3.scaleLinear().domain([0,Math.pow(labels.top(1)[0].value, root)]),
     g = svg.append('g')
            .attr('transform','translate('+(padding+xOffset)+','+(padding+yOffset)+')'),
     bgs = g.append('g').selectAll('rect').data(data.all()).enter().append('rect').classed('bg',true),
@@ -402,8 +471,6 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
 
         return label;
       }
-
-
     });
 
     xLabels = xLabels.selectAll('text').data(years).enter().append('text')
@@ -414,7 +481,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
   };
 
   function shortenLabel(l){
-    [['Weltanschauungsgemeinschaften','Weltanschauungsg.'], ['Die/Der ',''], [' -Senatskanzlei -', ' SK'], ['Senatskanzlei', 'SK'], ['SK -', ' SK'],['Angelegenheiten -','Angelegenheiten'], ['des Staatssicherheitsdienstes der ehemaligen DDR','der Stasi'], [' Berlin', ''], ['Bezirksamt', 'BA'], ['Senatsverwaltung für', 'SV']].forEach(function(r){
+    [["'", 'unbekannt'],['Weltanschauungsgemeinschaften','Weltanschauungsg.'], ['Die/Der ',''], [' -Senatskanzlei -', ' SK'], ['Senatskanzlei', 'SK'], ['SK -', ' SK'],['Angelegenheiten -','Angelegenheiten'], ['des Staatssicherheitsdienstes der ehemaligen DDR','der Stasi'], [' Berlin', ''], ['Bezirksamt', 'BA'], ['Senatsverwaltung für', 'SV']].forEach(function(r){
       l = l.replace(r[0],r[1]);
     });
     return l;
@@ -457,7 +524,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
     sumbars.transition()
       .duration((init)?0:500)
       .attr('width', function(d,i){
-        return sumw(d.value);
+        return sumw(Math.pow(d.value, root));
       });
 
     xLabels.transition()
@@ -483,7 +550,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
       .duration((init)?0:500)
       .attr('width', blockWidth)
       .attr('height', function(d){
-        return y(d.value);
+        return y(Math.pow(d.value, root));
       })
       .attr('x', function(d){
         var keys = d.key.split('_');
@@ -491,7 +558,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
       })
       .attr('y', function(d){
         var keys = d.key.split('_');
-        return (blockHeight+padding) * parseInt(keys[0]) + blockHeight - y(d.value);
+        return (blockHeight+padding) * parseInt(keys[0]) + blockHeight - y(Math.pow(d.value, root));
       });
 
     init = false;
@@ -501,8 +568,8 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
     data = _data;
     labels = _labels;
 
-    y.domain([0,data.top(1)[0].value]);
-    sumw.domain([0,labels.top(1)[0].value]);
+    y.domain([0,Math.pow(data.top(1)[0].value, root)]);
+    sumw.domain([0,Math.pow(labels.top(1)[0].value, root)]);
 
     module.update();
   };
@@ -562,7 +629,7 @@ var preview = function(_container, _data, _dicts){
     container.selectAll('tr').remove();
     var rows = container.selectAll('tr').data(tdata).enter().append('tr');
 
-    (['jahr','name','politikbereich','geber','betrag']).forEach(function(c){
+    (['jahr','name','politikbereich','geber','zweck','betrag']).forEach(function(c){
       rows.append('td').attr('class',c).datum(function(d){ return d[c]; }).html(function(d){
         if(c in dicts){
           return dicts[c][d];
@@ -619,6 +686,7 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
   var module = {},
     container = _container,
     data = _data,
+    filters = [],
     filterFunction = _filterFunction,
     filterKey = _filterKey,
     dict = _dict,
@@ -628,11 +696,15 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
     geojson = _geojson,
     geokeys = {},
     svg = container.append('svg')
+      .classed('mapChart',true)
       .attr('width',width)
       .attr('height', height)
       .attr("viewBox", "0 0 "+width+" "+height)
       .attr("preserveAspectRatio", "xMinYMin meet"),
+    map = svg.append('g'),
+    mapOverlay = svg.append('g'),
     polygons = null,
+    overlays = null,
     init = true,
     projection = d3.geoMercator()
           .center([13.41, 52.51])
@@ -650,7 +722,7 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
       dict_keys[d.id] = d.label;
     });
 
-    polygons = svg.selectAll('path').data(data.all()).enter().append('path')
+    polygons = map.selectAll('path').data(data.all()).enter().append('path')
       .attr('d', function(d){
         if(dict_keys[d.key] in geokeys){
           return path(geokeys[dict_keys[d.key]]);
@@ -658,8 +730,18 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
         return '';
       })
       .style('stroke-width', 0.5)
-      .style('stroke','rgba(255,255,255,1)')
-      .on('click', function(d){
+      .style('stroke','rgba(255,255,255,1)');
+
+    overlays = mapOverlay.selectAll('path').data(data.all()).enter().append('path')
+      .style('fill','transparent')
+      .style('stroke-width','2')
+      .classed('overlays', true)
+      .attr('d', function(d){
+        if(dict_keys[d.key] in geokeys){
+          return path(geokeys[dict_keys[d.key]]);
+        }
+        return '';
+      }).on('click', function(d){
         filterFunction(filterKey, d.key);
       });
 
@@ -673,6 +755,13 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
         return color(d.value);
       });
 
+    overlays.classed('selected', function(d){
+      if(filters.indexOf(d.key)>-1){
+        return true;
+      }
+      return false;
+    });
+
     init = false;
   };
 
@@ -680,8 +769,9 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
     module.update();
   };
 
-  module.data = function(_data){
+  module.data = function(_data, _filters){
     data = _data;
+    filters = _filters;
     color.domain([0, data.top(1)[0].value]);
     module.update();
   };
@@ -694,6 +784,7 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
 var fund, all, date, dates, name, postcode, postcodes, politikbereich, politikbereichs, geber, gebers, geber_jahre, gebers_jahre, politikbereich_jahre, politikbereichs_jahre, postcodeYears, filter, sum_chart, art_chart, year_chart, map_chart, map_chart_years, table;
 
 var filterFunction = function(key, value){
+  console.log(key, value);
   if(filter[key].indexOf(value)>-1){
     filter[key].splice(filter[key].indexOf(value), 1);
   }else{
@@ -849,13 +940,13 @@ d3.queue()
 function updateCharts(){
   geber_chart.data(gebers_jahre, gebers);
   art_chart.data(politikbereichs_jahre, politikbereichs);
-  year_chart.data(dates);
+  year_chart.data(dates, filter['date']);
   table.data(fund);
   sum_chart.data(all);
-  map_chart.data(postcodes);
+  map_chart.data(postcodes, filter['postcode']);
 
   for(var year in map_chart_years){
-    map_chart_years[year].data(postcodeYears[year]);
+    map_chart_years[year].data(postcodeYears[year], filter['postcode']);
   }
 }
 

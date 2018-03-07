@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Crossfilter</title>
+<link rel="stylesheet" type="text/css" href="css/main.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="sumChart"></div>
+    <div id="yearChart"></div>
+    <div id="mapChart"></div>
+    <div id="geberChart"></div>
+    <div id="artChart"></div>
+    <div id="maprow">
+    </div>
+    <input type="text" id="search" placeholder="Namens-Suche" />
+    <div  id="pagination" class="pagination">
+      <a class="prev">&laquo; zurück</a>
+      <span>x von y Förderungen</span>
+      <a class="next">weiter &raquo;</a>
+    </div>
+    <table id="preview">
+      <thead>
+        <tr>
+          <th>Jahr</th>
+          <th>Name</th>
+          <th>Bereich</th>
+          <th>Geber</th>
+          <th>Zweck</th>
+          <th class="betrag">Summe</th>
+        </tr>
+      </thead>
+      <tbody>
+
+      </tbody>
+      <tfoot>
+        <tr>
+          <th>Jahr</th>
+          <th>Name</th>
+          <th>Bereich</th>
+          <th>Geber</th>
+          <th>Zweck</th>
+          <th class="betrag">Summe</th>
+        </tr>
+      </tfoot>
+    </table>
+    <div class="pagination">
+      <a class="prev">&laquo; zurück</a>
+      <span>x von y Förderungen</span>
+      <a class="next">weiter &raquo;</a>
+    </div>
+  </div>
+
+<script src="d3.v4.min.js"></script>
+<script src="js/d3-history/d3-history.min.js"></script>
+<script src="js/event.js"></script>
+<script src="js/crossfilter/crossfilter.min.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/mapChart.js"></script>
+<script src="js/matrixChart.js"></script>
+<script src="js/preview.js"></script>
+<script src="js/sumChart.js"></script>
+<script src="js/yearChart.js"></script>
+<script>
+
+
+  // ACTIONS FROM THE UI
+
+function updateUI(){
+  updateCharts();
+}
+
+//Predefined Filters
+
+var state = {}, fund, all, date, dates, names, postcode, postcodes, politikbereich, politikbereichs, geber, gebers, geber_jahre, gebers_jahre, politikbereich_jahre, politikbereichs_jahre, postcodeYears, filter, sum_chart, art_chart, year_chart, map_chart, map_chart_years, table;
+
+function updateFilter(){
+  var changed = false;
+  for(var key in state){
+    if(key in filter && state[key].length>=1){
+      state[key].forEach(function(s){
+        if(filter[key].indexOf(s)==-1){
+          filterFunction(key, s, true);
+          changed = true;
+        }
+      });
+    }
+  }
+  if(changed){
+    dispatcher.call('action', this, createURL());
+  }
+}
+
+var filterFunction = function(key, value, silent){
+  //fix bug with double zero digits
+  value = cleanId(value);
+
+  if(filter[key].indexOf(value)>-1){
+    filter[key].splice(filter[key].indexOf(value), 1);
+  }else{
+    filter[key].push(value);
+  }
+
+  var dimension = null;
+  switch(key){
+    case 'date':
+      dimension = date;
+    break;
+    case 'postcode':
+      dimension = postcode;
+    break;
+    case 'politikbereich':
+      dimension = politikbereich;
+    break;
+    case 'geber':
+      dimension = geber;
+    break;
+  }
+
+  if(filter[key].length == 0){
+
+    dimension.filterAll();
+
+  }else{
+
+    dimension.filter(function(d){
+      if(filter[key].indexOf(d)>-1){
+        return true;
+      }
+      return false;
+    });
+
+  }
+
+  if(!silent || silent == undefined){
+    for(var key in filter){
+      state[key] = filter[key].join(',');
+    }
+
+    dispatcher.call('action', this, createURL());
+  }
+};
+
+d3.queue()
+  .defer(d3.json, "./data/plz.json")
+  .defer(d3.csv, "./data/min.csv")
+  .defer(d3.csv, "./data/dict_geber.csv")
+  .defer(d3.csv, "./data/dict_plz.csv")
+  .defer(d3.csv, "./data/dict_politikbereich.csv")
+  .await(function(error, plz, funds, dict_geber, dict_plz, dict_politikbereich){
+
+  // A little coercion, since the CSV is untyped.
+  funds.forEach(function(d, i) {
+    d.index = i;
+    d.date = new Date(d.jahr);
+    d.betrag = +d.betrag;
+  });
+
+  //id;name;geber;art;jahr;anschrift;politikbereich;zweck;betrag;empfaengerid;plz;city;street
+
+
+
+  // Create the crossfilter for the relevant dimensions and groups.
+  fund = crossfilter(funds);
+  all = fund.groupAll().reduceSum(function(d){return d.betrag; });
+
+  // date = fund.dimension(function(d) { return d.date; }),
+  // dates = date.group(d3.timeYear).reduceSum(function(d) { return d.betrag; }),
+
+  date = fund.dimension(function(d) { return d.jahr; });
+  dates = date.group().reduceSum(function(d) { return d.betrag; });
+
+  names = fund.dimension(function(d) { return d.name.toLowerCase(); });
+
+  postcode = fund.dimension(function(d) { return d.plz; });
+  postcodes = postcode.group().reduceSum(function(d) { return d.betrag; });
+
+  politikbereich = fund.dimension(function(d) { return d.politikbereich; });
+  politikbereichs = politikbereich.group().reduceSum(function(d) { return d.betrag; });
+
+  //for the labels
+  geber = fund.dimension(function(d) { return d.geber; });
+  gebers = geber.group().reduceSum(function(d) { return d.betrag; });
+
+  geber_jahre = fund.dimension(function(d) { return ((d.geber < 10)?'0':'') +d.geber + '_' + d.jahr; });
+  gebers_jahre = geber_jahre.group().reduceSum(function(d) { return d.betrag; });
+
+  politikbereich_jahre = fund.dimension(function(d) { return ((d.politikbereich < 10)?'0':'') +d.politikbereich + '_' + d.jahr; });
+  politikbereichs_jahre = politikbereich_jahre.group().reduceSum(function(d) { return d.betrag; });
+
+  postcodeYears = {};
+
+  //for(var i = 2009; i<=2016; i++){
+  postcodeYears[2009] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2009)?d.betrag:0); });
+  postcodeYears[2010] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2010)?d.betrag:0); });
+  postcodeYears[2011] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2011)?d.betrag:0); });
+  postcodeYears[2012] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2012)?d.betrag:0); });
+  postcodeYears[2013] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2013)?d.betrag:0); });
+  postcodeYears[2014] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2014)?d.betrag:0); });
+  postcodeYears[2015] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2015)?d.betrag:0); });
+  postcodeYears[2016] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2016)?d.betrag:0); });
+  //}
+
+  filter = {date:[],politikbereich:[],geber:[],postcode:[]};
+
+  sum_chart = sumChart(d3.select('#sumChart'), all);
+  sum_chart.init();
+
+  geber_chart = matrixChart(d3.select('#geberChart'), gebers, gebers_jahre, dict_geber, filterFunction, 'geber');
+  geber_chart.init();
+
+  art_chart = matrixChart(d3.select('#artChart'), politikbereichs, politikbereichs_jahre, dict_politikbereich, filterFunction, 'politikbereich');
+  art_chart.init();
+
+  year_chart = yearChart(d3.select('#yearChart'), dates, filterFunction, 'date');
+  year_chart.init();
+
+  map_chart = mapChart(d3.select('#mapChart'), plz, postcodes, dict_plz, filterFunction, 'postcode');
+    map_chart.init();
+
+  map_chart_years = [];
+  for(var i = 2009; i<=2016; i++){
+    var container = d3.select('#maprow').append('div').attr('id', 'map'+i);
+    container.append('span').classed('year-title',true).text(i);
+    map_chart_years[i] = mapChart(container, plz, postcodeYears[i], dict_plz, filterFunction, 'postcode');
+    map_chart_years[i].init();
+  }
+
+  table = preview(d3.select('#preview tbody'), fund, {geber:dict_geber, politikbereich:dict_politikbereich});
+  table.init();
+  d3.selectAll('.next').on('click', function(){ table.next(); });
+  d3.selectAll('.prev').on('click', function(){ table.prev(); });
+
+  d3.select('#search').on('keyup', debouncer(function(e){
+      var v = d3.select('#search').property('value');
+      if(v.length > 2){
+        names.filter(function(d){
+          if(d.indexOf(v.toLowerCase())>-1){
+            return true;
+          }
+          return false;
+        });
+      }else{
+        names.filterAll();
+      }
+
+      updateCharts();
+  }, 200));
+
+  d3.select(window).on('resize', debouncer(function(e){
+    year_chart.resize();
+    geber_chart.resize();
+    art_chart.resize();
+    map_chart.resize();
+    for(var year in map_chart_years){
+      map_chart_years[year].resize();
+    }
+  }), 200);
+
+  retrieveUrl();
+
+});
+
+function updateCharts(){
+  geber_chart.data(gebers_jahre, gebers, filter['geber'], filter['date']);
+  art_chart.data(politikbereichs_jahre, politikbereichs, filter['politikbereich'], filter['date']);
+  year_chart.data(dates, filter['date']);
+  table.data(fund);
+  sum_chart.data(all);
+  map_chart.data(postcodes, filter['postcode']);
+
+  for(var year in map_chart_years){
+    map_chart_years[year].data(postcodeYears[year], filter['postcode']);
+  }
+}
+
+
+
+</script>
+</body>
+</html>

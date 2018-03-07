@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="utf-8">
+<title>History Test</title>
+</head>
+<body>
+<script src="d3.v4.min.js"></script>
+<script src="js/d3-history/d3-history.min.js"></script>
+<script>
+
+var state = {};
+
+function updateUI(){
+  console.log('updateUI', state);
+}
+
+function retrieveUrl(){
+  state = {};
+  var comps = window.location.href.split('?');
+  if(comps.length>1){
+    var cs = comps[1].split('&');
+    cs.forEach(function(c){
+      var el = c.split('=');
+      state[el[0]] = el[1];
+    });
+  }
+  updateUI();
+}
+
+window.addEventListener('popstate', function() {
+  retrieveUrl();
+});
+
+var dispatcher = d3.history('action');
+
+// ACTIONS FROM THE UI
+d3.select('body').append('a').text('test').on('click', function() {
+  state['key'+Math.round(Math.random()*10)] = Math.round(Math.random()*100);
+  dispatcher.call('action', this, createURL());
+});
+
+dispatcher.on('action', function() {
+  updateUI();
+});
+
+function createURL(){
+  var keys = [];
+  for(var key in state){ keys.push(key + '=' + state[key]); }
+  return '?' + keys.join('&');
+}
+
+console.log('init')
+retrieveUrl();
+
+</script>
+</body>
+</html>
