@@ -34,6 +34,18 @@ body{
   stroke:rgba(0,0,0,0.5);
 }
 
+.dateChart .right .tick:first-of-type line{
+  display: none;
+}
+
+.dateChart .right .tick line{
+  stroke-dasharray: 3,3;
+}
+
+.dateChart .xaxis text{
+  text-anchor: middle;
+}
+
 .dateChart .xaxis path,
 .dateChart .xaxis line{
   display: none;
@@ -203,12 +215,33 @@ td{
   transition-timing-function: ease-out;
 }
 
-.dateChart rect:hover,
-.dateChart rect.selected{
+.dateChart .dategroup:hover rect,
+.dateChart .dategroup.selected rect{
   -webkit-transition: fill 0s;
   transition: fill 0s;
-  fill:rgba(45,145,210,1) !important;
+  fill:rgba(45,145,210,1);
   cursor: pointer;
+}
+
+.dateChart rect.counts{
+  fill:url("#texture");
+  stroke:#000;
+  stroke-width:1px;
+}
+
+.dateChart.hasSelection rect.counts{
+  fill:url("#texture_grey");
+  stroke:#AAA;
+}
+
+.dateChart .dategroup.selected rect.counts,
+.dateChart .dategroup:hover rect.counts{
+  fill: url("#texture_blue");
+  stroke:rgba(45,145,210,1);
+}
+
+.dateChart pattern rect{
+  fill:#fff !important;
 }
 
 .mapChart path.overlays:hover,

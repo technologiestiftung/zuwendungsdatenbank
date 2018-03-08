@@ -1,4 +1,4 @@
-var yearChart = function(_container, _dates, _filterFunction, _filterKey){
+var yearChart = function(_container, _dates, _counts, _filterFunction, _filterKey){
 
   var module = {},
     filterFunction = _filterFunction,
@@ -7,11 +7,15 @@ var yearChart = function(_container, _dates, _filterFunction, _filterKey){
     init = true,
     container = _container,
     dates = _dates,
+    counts = _counts,
+    data = groupData(_dates, _counts),
     width, height, barWidth, padding = 10, xOffset = 150, yOffset = 20,
     x = d3.scaleTime().domain([dates.all()[0].key, dates.all()[dates.size()-1].key]),
-    xAxis = d3.axisBottom().scale(x).ticks(d3.timeYear),
+    xAxis = d3.axisBottom().scale(x).tickFormat(d3.format("d")),//.ticks(d3.timeYear),
     x_axis,
     y = d3.scaleLinear(),
+    y_count = d3.scaleLinear(),
+    yCountAxis = d3.axisRight().ticks(10).scale(y_count),
     yAxis = d3.axisLeft().ticks(10).scale(y).tickFormat(function(d){
       if(d >= 1000000000){
         return (d/1000000000).toFixed(2) + ' B €';
@@ -24,50 +28,109 @@ var yearChart = function(_container, _dates, _filterFunction, _filterKey){
       }
     }),
     y_axis,
+    y_count_axis,
     svg = container.append('svg').classed('dateChart', true),
+
+    texture = textures.lines()
+      .id('texture')
+      .size(4)
+      .background('#fff')
+      .stroke('rgba(0,0,0,1)')
+      .strokeWidth(1),
+
+    texture_blue = textures.lines()
+      .id('texture_blue')
+      .size(4)
+      .strokeWidth(1)
+      .background('#fff')
+      .stroke("rgba(45,145,210,1)"),
+
+    texture_grey = textures.lines()
+      .id('texture_grey')
+      .size(4)
+      .strokeWidth(1)
+      .background('#fff')
+      .stroke("rgba(170,170,170,1)"),
+
     g = svg.append('g')
-           .attr('transform','translate('+(padding+xOffset)+','+padding+')'),
-    chart;
+           .attr('transform','translate('+(padding+xOffset)+','+(2*padding)+')'),
+
+    chart = svg.append('g').attr('transform','translate('+(padding+xOffset)+','+(2*padding)+')').selectAll('g').data(data).enter().append('g').on('click', function(d){
+        filterFunction(filterKey, d.date.key);
+      }).classed('dategroup', true),
+
+    x_label = g.append('text').text('Summe (€)').style('font-weight','bold').attr('text-anchor','end'),
+    x_right_label = g.append('text').text('Anzahl').style('font-weight','bold'),
+
+    chart_dates = chart.append('rect'),
+    chart_counts = chart.append('rect').classed('counts',true);
+
+    svg.call(texture);
+    svg.call(texture_blue);
+    svg.call(texture_grey);
+
+  function groupData(_dates, _counts){
+    var data = [];
+    _dates.all().forEach(function(d,di){
+      data.push({
+        date:d,
+        count:_counts.all()[di]
+      });
+    });
+    return data;
+  }
 
   module.init = function(){
     y_axis = g.append('g').classed('yaxis',true).attr('transform', 'translate(-'+padding+',0)');
+    y_count_axis = g.append('g').attr('class','yaxis right');
     x_axis = g.append('g').classed('xaxis',true);
-
-    chart = g.selectAll('rect').data(dates.all()).enter().append('rect')
-      .on('click', function(d){
-        filterFunction(filterKey, d.key);
-      });
 
     module.resize();
   };
 
-  module.data = function(_dates, _filters){
+  module.data = function(_dates, _counts, _filters){
     dates = _dates;
+    counts = _counts;
+    data = groupData(_dates, _counts);
     filters = _filters;
     svg.classed('hasSelection', ((filters.length>0)?true:false));
     module.update();
   };
 
   module.update = function(){
-    dates = _dates;
     y.domain([0, d3.max(dates.all(), function(d){ return d.value;})]);
+    y_count.domain([0, d3.max(counts.all(), function(d){ return d.value;})]);
 
-    chart.data(dates.all())
+    chart.data(data)
       .classed('selected', function(d){
-        if(filters.indexOf(d.key)>-1){
+        if(filters.indexOf(d.date.key)>-1){
           return true;
         }
         return false;
       })
       .transition().duration((init)?0:500)
-        .attr('x',function(d,i){ return x(d.key); })
-        .attr('y',function(d,i){ return y(d.value); })
-        .attr('width',function(d,i){ return barWidth; })
-        .attr('height',function(d,i){ return height-2*padding-yOffset-y(d.value); });
+        .attr('transform',function(d,i){ return 'translate(' + x(d.date.key) + ',0)'; });
+
+    chart_dates
+      .transition().duration((init)?0:500)
+        .attr('y',function(d,i){ return y(d.date.value); })
+        .attr('width',function(d,i){ return barWidth/2; })
+        .attr('height',function(d,i){ return height-3*padding-yOffset-y(d.date.value); });
+
+    chart_counts
+      .transition().duration((init)?0:500)
+        .attr('x', barWidth/2)
+        .attr('y',function(d,i){ return y_count(d.count.value); })
+        .attr('width',function(d,i){ return barWidth/2; })
+        .attr('height',function(d,i){ return height-3*padding-yOffset-y_count(d.count.value); });
 
     y_axis.transition()
       .duration((init)?0:500)
       .call(yAxis);
+
+    y_count_axis.transition()
+      .duration((init)?0:500)
+      .call(yCountAxis);
 
     x_axis.transition()
       .duration((init)?0:500)
@@ -82,14 +145,19 @@ var yearChart = function(_container, _dates, _filterFunction, _filterKey){
 
     barWidth = ((width - padding*2 - xOffset) - (dates.size())*padding)/(dates.size()+1);
     x.range([0, (width-3*padding-barWidth*2-xOffset)]);
-    y.range([height-2*padding-yOffset,0]);
+    y.range([height-3*padding-yOffset,0]);
+    y_count.range([height-3*padding-yOffset,0]);
 
     svg.attr('width',width);
     svg.attr('height',height);
 
-    yAxis.tickSize(-(width - padding - xOffset - barWidth), 0, 0);
+    x_label.attr('transform', 'translate('+ (-padding - 3) +',' + -padding + ')');
+    x_right_label.attr('transform', 'translate('+((width - 2*padding - xOffset - barWidth + 3))+','+-padding+')');
 
-    x_axis.attr('transform', 'translate('+barWidth/2+','+(height-2*padding-yOffset)+')');
+    yAxis.tickSize(-(width - padding - xOffset - barWidth), 0, 0);
+    yCountAxis.tickSize(-(width - padding - xOffset - barWidth), 0, 0);
+    y_count_axis.attr('transform', 'translate('+(width-padding*2-xOffset-barWidth)+',0)');
+    x_axis.attr('transform', 'translate('+(barWidth/2)+','+(height-3*padding-yOffset)+')');
 
     module.update();
   };

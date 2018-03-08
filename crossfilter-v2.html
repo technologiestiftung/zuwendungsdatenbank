@@ -53,6 +53,7 @@
   </div>
 
 <script src="d3.v4.min.js"></script>
+<script src="js/textures/dist/textures.js"></script>
 <script src="js/d3-history/d3-history.min.js"></script>
 <script src="js/event.js"></script>
 <script src="js/crossfilter/crossfilter.min.js"></script>
@@ -73,7 +74,9 @@ function updateUI(){
 
 //Predefined Filters
 
-var state = {}, fund, all, date, dates, names, postcode, postcodes, politikbereich, politikbereichs, geber, gebers, geber_jahre, gebers_jahre, politikbereich_jahre, politikbereichs_jahre, postcodeYears, filter, sum_chart, art_chart, year_chart, map_chart, map_chart_years, table;
+//Create a global object that contains dimensions and groups, etc.
+
+var state = {}, dates_count, fund, all, date, dates, names, postcode, postcodes, politikbereich, politikbereichs, geber, gebers, geber_jahre, gebers_jahre, politikbereich_jahre, politikbereichs_jahre, postcodeYears, filter, sum_chart, art_chart, year_chart, map_chart, map_chart_years, table;
 
 function updateFilter(){
   var changed = false;
@@ -170,6 +173,7 @@ d3.queue()
 
   date = fund.dimension(function(d) { return d.jahr; });
   dates = date.group().reduceSum(function(d) { return d.betrag; });
+  dates_count = date.group().reduceCount();
 
   names = fund.dimension(function(d) { return d.name.toLowerCase(); });
 
@@ -213,7 +217,7 @@ d3.queue()
   art_chart = matrixChart(d3.select('#artChart'), politikbereichs, politikbereichs_jahre, dict_politikbereich, filterFunction, 'politikbereich');
   art_chart.init();
 
-  year_chart = yearChart(d3.select('#yearChart'), dates, filterFunction, 'date');
+  year_chart = yearChart(d3.select('#yearChart'), dates, dates_count, filterFunction, 'date');
   year_chart.init();
 
   map_chart = mapChart(d3.select('#mapChart'), plz, postcodes, dict_plz, filterFunction, 'postcode');
@@ -265,7 +269,7 @@ d3.queue()
 function updateCharts(){
   geber_chart.data(gebers_jahre, gebers, filter['geber'], filter['date']);
   art_chart.data(politikbereichs_jahre, politikbereichs, filter['politikbereich'], filter['date']);
-  year_chart.data(dates, filter['date']);
+  year_chart.data(dates, dates_count, filter['date']);
   table.data(fund);
   sum_chart.data(all);
   map_chart.data(postcodes, filter['postcode']);
