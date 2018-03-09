@@ -182,16 +182,20 @@ d3.queue()
 
   politikbereich = fund.dimension(function(d) { return d.politikbereich; });
   politikbereichs = politikbereich.group().reduceSum(function(d) { return d.betrag; });
+  politikbereichs_count = politikbereich.group().reduceCount();
 
   //for the labels
   geber = fund.dimension(function(d) { return d.geber; });
   gebers = geber.group().reduceSum(function(d) { return d.betrag; });
+  gebers_count = geber.group().reduceCount();
 
   geber_jahre = fund.dimension(function(d) { return ((d.geber < 10)?'0':'') +d.geber + '_' + d.jahr; });
   gebers_jahre = geber_jahre.group().reduceSum(function(d) { return d.betrag; });
+  gebers_jahre_count = geber_jahre.group().reduceCount();
 
   politikbereich_jahre = fund.dimension(function(d) { return ((d.politikbereich < 10)?'0':'') +d.politikbereich + '_' + d.jahr; });
   politikbereichs_jahre = politikbereich_jahre.group().reduceSum(function(d) { return d.betrag; });
+  politikbereichs_jahre_count = politikbereich_jahre.group().reduceCount();
 
   postcodeYears = {};
 
@@ -211,10 +215,10 @@ d3.queue()
   sum_chart = sumChart(d3.select('#sumChart'), all);
   sum_chart.init();
 
-  geber_chart = matrixChart(d3.select('#geberChart'), gebers, gebers_jahre, dict_geber, filterFunction, 'geber');
+  geber_chart = matrixChart(d3.select('#geberChart'), gebers, gebers_jahre, dict_geber, gebers_jahre_count, filterFunction, 'geber');
   geber_chart.init();
 
-  art_chart = matrixChart(d3.select('#artChart'), politikbereichs, politikbereichs_jahre, dict_politikbereich, filterFunction, 'politikbereich');
+  art_chart = matrixChart(d3.select('#artChart'), politikbereichs, politikbereichs_jahre, dict_politikbereich, politikbereichs_jahre_count, filterFunction, 'politikbereich');
   art_chart.init();
 
   year_chart = yearChart(d3.select('#yearChart'), dates, dates_count, filterFunction, 'date');
@@ -267,8 +271,8 @@ d3.queue()
 });
 
 function updateCharts(){
-  geber_chart.data(gebers_jahre, gebers, filter['geber'], filter['date']);
-  art_chart.data(politikbereichs_jahre, politikbereichs, filter['politikbereich'], filter['date']);
+  geber_chart.data(gebers_jahre, gebers, gebers_jahre_count, filter['geber'], filter['date']);
+  art_chart.data(politikbereichs_jahre, politikbereichs, politikbereichs_jahre_count, filter['politikbereich'], filter['date']);
   year_chart.data(dates, dates_count, filter['date']);
   table.data(fund);
   sum_chart.data(all);

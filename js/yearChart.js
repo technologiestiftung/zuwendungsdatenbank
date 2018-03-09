@@ -120,9 +120,9 @@ var yearChart = function(_container, _dates, _counts, _filterFunction, _filterKe
     chart_counts
       .transition().duration((init)?0:500)
         .attr('x', barWidth/2)
-        .attr('y',function(d,i){ return y_count(d.count.value); })
+        .attr('y',function(d,i){ return y_count(d.count.value)+1; })
         .attr('width',function(d,i){ return barWidth/2; })
-        .attr('height',function(d,i){ return height-3*padding-yOffset-y_count(d.count.value); });
+        .attr('height',function(d,i){ return height-3*padding-yOffset-y_count(d.count.value)-1; });
 
     y_axis.transition()
       .duration((init)?0:500)

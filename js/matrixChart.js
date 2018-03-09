@@ -1,4 +1,4 @@
-var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _filterKey){
+var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFunction, _filterKey){
 
   //ADD SUM
 
@@ -16,7 +16,8 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
     container = _container,
     labels = _labels,
     data = _data,
-    d3Data = splitData(_data, _labels),
+    count = _count,
+    d3Data = splitData(_data, _count, _labels),
     filters = [],
     sort = 'label',
     filterYears = [],
@@ -24,11 +25,13 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
     width,height,blockWidth,blockHeight=25,padding=10,xOffset = 150, yOffset = 10,
     svg = container.append('svg').classed('matrixChart', true).classed(sort,true),
     y = d3.scaleLinear().domain([0,Math.pow(data.top(1)[0].value, root)]),
+    y_count = d3.scaleLinear().domain([0,Math.pow(count.top(1)[0].value, root)]),
     xLabels = svg.append('g').attr('transform','translate('+(padding+xOffset)+','+padding+')'),
-    sortButton = svg.append('g').attr('transform','translate('+padding+','+padding+')').append('text'),
+    sortButton = svg.append('g').attr('transform','translate('+xOffset+','+padding+')').append('text').style('text-anchor','end'),
     years = [],
     sums = [],
-    sumw = d3.scaleLinear().domain([0,Math.pow(labels.top(1)[0].value, root)]),
+    sumw = d3.scaleLinear().domain([0,Math.pow(d3.max(d3Data, function(d){ return d.sum; }), root)]),
+    sumcountw = d3.scaleLinear().domain([0,Math.pow(d3.max(d3Data, function(d){ return d.count; }), root)]),
     g = svg.append('g')
            .attr('transform','translate('+(padding+xOffset)+','+(padding+yOffset)+')'),
     groups = g.append('g').selectAll('g').data(d3Data).enter().append('g').attr('class', 'matrixGroup'),
@@ -39,14 +42,39 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
       .attr('text-anchor', 'end'),
     bgs = groups.selectAll('rect.bg').data(function(d){return d.years;}).enter().append('rect').classed('bg',true),
     bars = groups.selectAll('rect.bar').data(function(d){return d.years;}).enter().append('rect').classed('bar',true),
-    sumg = groups.append('g').datum(function(d,i){ return labels.all()[i]; }),
+    bars_count = groups.selectAll('rect.count').data(function(d){return d.years;}).enter().append('rect').classed('count',true),
+    sumg = groups.selectAll('g.sumgroup').data(function(d){ return [d]; }).enter().append('g').classed('sumgroup',true),
     sumbg = sumg.append('rect').attr('height',blockHeight).classed('sumbg', true),
-    sumbars = sumg.append('rect').attr('height',blockHeight).classed('sumbar', true),
+    
+    sumbars = sumg.selectAll('rect.sumbar').data(function(d){ return [d]; }).enter().append('rect').attr('height',blockHeight/2).classed('sumbar', true),
+    sumbars_count = sumg.selectAll('rect.count').data(function(d){ return [d]; }).enter().append('rect').attr('x',1).attr('height',blockHeight/2).attr('y',blockHeight/2).classed('count', true),
+
     buttons = groups.append('rect').attr('x', -xOffset).classed('button',true).on('click', function(d){
       filterFunction(filterKey, d.key);
-    });
+    }),
 
-  function splitData(_data, _labels){
+    texture = textures.lines()
+      .id('texture')
+      .size(4)
+      .background('#fff')
+      .stroke('rgba(0,0,0,1)')
+      .strokeWidth(1),
+
+    texture_blue = textures.lines()
+      .id('texture_blue')
+      .size(4)
+      .strokeWidth(1)
+      .background('#fff')
+      .stroke("rgba(45,145,210,1)"),
+
+    texture_grey = textures.lines()
+      .id('texture_grey')
+      .size(4)
+      .strokeWidth(1)
+      .background('#fff')
+      .stroke("rgba(170,170,170,1)");
+
+  function splitData(_data, _count, _labels){
     var ndata = [], nkeys = {};
 
     _data.all().forEach(function(d, di){
@@ -56,17 +84,18 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
         ndata.push({key:id, years:[]});
         nkeys[id] = ndata.length-1;
       }
-      ndata[nkeys[id]].years.push({key:year, value:d.value});
+      ndata[nkeys[id]].years.push({key:year, value:d.value, count:_count.all()[di].value});
     });
 
     var sorter = [];
 
     ndata.forEach(function(d,di){
-      ndata[di]['sort'] = {sum:0,label:0,isum:0,ilabel:0};
+      ndata[di]['sort'] = {sum:0,label:0,isum:0,ilabel:0,icount:0,count:0};
       ndata[di]['id'] = di;
       ndata[di]['label'] = dict_keys[formNum(_labels.all()[di].key)];
       ndata[di]['sum'] = ndata[di].years.reduce(function(sum,v){ return v.value+sum; }, 0);
-      sorter.push({id:di,label:ndata[di]['label'].trim(),sum:ndata[di]['sum']});
+      ndata[di]['count'] = ndata[di].years.reduce(function(sum,v){ return v.count+sum; }, 0);
+      sorter.push({id:di,label:ndata[di]['label'].trim(),sum:ndata[di]['sum'],count:ndata[di]['count']});
     });
 
     sorter.sort(function(a,b){
@@ -85,6 +114,15 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
     sorter.forEach(function(d,i){
       ndata[d.id].sort.sum = i;
       ndata[d.id].sort.isum = sorter.length-i-1;
+    });
+
+    sorter.sort(function(a,b){
+      return b.count - a.count;
+    });
+
+    sorter.forEach(function(d,i){
+      ndata[d.id].sort.count = i;
+      ndata[d.id].sort.icount = sorter.length-i-1;
     });
 
     return ndata;
@@ -142,7 +180,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
       .attr('text-anchor', 'middle')
       .text(function(d){return d;});
 
-    sortButton.append('tspan').text('Sortieren: ');
+    //sortButton.append('tspan').text('Sortieren: ');
     sortButton.append('tspan').text('↑').classed('sort-d-label',true);
     sortButton.append('tspan').text('↓').classed('sort-d-ilabel',true);
     sortButton.append('tspan').text('Name').classed('sort-label',true).on('click',function(){ module.toggleSort('label'); });
@@ -150,6 +188,10 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
     sortButton.append('tspan').text('↑').classed('sort-d-sum',true);
     sortButton.append('tspan').text('↓').classed('sort-d-isum',true);
     sortButton.append('tspan').text('Summe').classed('sort-sum',true).on('click',function(){ module.toggleSort('sum'); });
+    sortButton.append('tspan').text(' / ');
+    sortButton.append('tspan').text('↑').classed('sort-d-count',true);
+    sortButton.append('tspan').text('↓').classed('sort-d-icount',true);
+    sortButton.append('tspan').text('Anzahl').classed('sort-count',true).on('click',function(){ module.toggleSort('count'); });
 
     module.resize();
   };
@@ -175,13 +217,15 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
     blockWidth = (width-padding*2-xOffset - years.length*padding)/(years.length+1);
 
     y.range([0, blockHeight]);
+    y_count.range([0, blockHeight]);
     sumw.range([0, blockWidth]);
+    sumcountw.range([0, blockWidth]);
 
     module.update();
   };
 
   module.toggleSort = function(_sort){
-    var sorts = ['label','sum'];
+    var sorts = ['label','sum','count'];
     sorts.forEach(function(s){
       svg.classed(s,false);
       svg.classed('i'+s,false);
@@ -192,6 +236,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
       sort = _sort;
     }
     svg.classed(sort,true);
+
     module.update();
   };
 
@@ -199,6 +244,8 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
     buttons
       .attr('height', blockHeight)
       .attr('width', (blockWidth+padding)*(years.length+1)+xOffset);
+
+    //ToDo only update and animate what really needs animating (resize, data change, init)
 
     groups.data(d3Data).classed('selected', function(d){
         if(filters.indexOf(cleanId(d.key))>-1){
@@ -211,19 +258,28 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
         return 'translate(0,'+(blockHeight+padding) * d.sort[sort]+')';
       });
 
-    sumg.transition()
-      .duration((init)?0:500)
-      .attr('transform','translate('+(years.length* (padding+blockWidth))+',0)');
+    sumg.data(function(d){ return [d]; })
+      .transition()
+        .duration((init)?0:500)
+        .attr('transform','translate('+(years.length* (padding+blockWidth))+',0)');
 
     sumbg.transition()
       .duration((init)?0:500)
       .attr('width', blockWidth);
 
-    sumbars.datum(function(d,i){ return labels.all()[i]; }).transition()
-      .duration((init)?0:500)
-      .attr('width', function(d,i){
-        return sumw(Math.pow(d.value, root));
-      });
+    sumbars.data(function(d){ return [d]; })
+      .transition()
+        .duration((init)?0:500)
+        .attr('width', function(d,i){
+          return sumw(Math.pow(d.sum, root));
+        });
+
+    sumbars_count.data(function(d){ return [d]; })
+      .transition()
+        .duration((init)?0:500)
+        .attr('width', function(d,i){
+          return sumcountw(Math.pow(d.count, root))-2;
+        });
 
     xLabels.transition()
       .duration((init)?0:500)
@@ -242,7 +298,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
 
     bars.data(function(d){return d.years;}).transition()
       .duration((init)?0:500)
-      .attr('width', blockWidth)
+      .attr('width', blockWidth/2)
       .attr('height', function(d){
         return y(Math.pow(d.value, root));
       })
@@ -253,20 +309,37 @@ var matrixChart = function(_container, _labels, _data, _dict, _filterFunction, _
         return blockHeight - y(Math.pow(d.value, root));
       });
 
+    bars_count.data(function(d){return d.years;}).transition()
+      .duration((init)?0:500)
+      .attr('width', blockWidth/2)
+      .attr('height', function(d){
+        return y_count(Math.pow(d.count, root))-2;
+      })
+      .attr('x', function(d){
+        return (blockWidth+padding) * years.indexOf(d.key) + blockWidth/2;
+      })
+      .attr('y', function(d){
+        return blockHeight - y_count(Math.pow(d.count, root)) + 1;
+      });
+
     init = false;
   };
 
-  module.data = function(_data, _labels, _filters, _filterYears){
+  module.data = function(_data, _labels, _count, _filters, _filterYears){
     filters = _filters;
     filterYears = _filterYears;
     data = _data;
-    d3Data = splitData(_data, _labels);
+    count = _count;
+    d3Data = splitData(_data, _count, _labels);
     labels = _labels;
 
     svg.classed('hasSelection', ((filters.length>0)?true:false));
 
     y.domain([0,Math.pow(data.top(1)[0].value, root)]);
-    sumw.domain([0,Math.pow(labels.top(1)[0].value, root)]);
+    y_count.domain([0,Math.pow(count.top(1)[0].value, root)]);
+
+    sumw.domain([0,Math.pow(d3.max(d3Data, function(d){ return d.sum; }), root)]);
+    sumcountw.domain([0,Math.pow(d3.max(d3Data, function(d){ return d.count; }), root)]);
 
     module.update();
   };

@@ -257,6 +257,20 @@ g.matrixGroup:hover rect.bg{
   fill:rgba(45,145,210,0.3);
 }
 
+g.matrixGroup rect.count{ 
+  fill:url("#texture");
+  stroke:#000;
+  stroke-width:1px;
+}
+
+svg.hasSelection g.matrixGroup.selected rect.count,
+svg.hasSelection g.matrixGroup:hover rect.count,
+g.matrixGroup.selected rect.count,
+g.matrixGroup:hover rect.count{ 
+  fill: url("#texture_blue");
+  stroke:rgba(45,145,210,1);
+}
+
 g.matrixGroup.selected rect.bar,
 g.matrixGroup:hover rect.bar{ 
   fill:rgba(45,145,210,1); 
@@ -272,6 +286,11 @@ svg.hasSelection rect.bar{
   fill:#AAA;
 }
 
+svg.hasSelection g.matrixGroup rect.count{
+  fill:url("#texture_grey");
+  stroke:#AAA;
+}
+
 g.matrixGroup.selected text,
 g.matrixGroup:hover text{
   fill:rgba(45,145,210,1);
@@ -283,11 +302,14 @@ g.matrixGroup:hover text{
   stroke:transparent;
 }
 
+.sort-d-count, .sort-d-icount,
 .sort-d-label, .sort-d-ilabel,
 .sort-d-sum, .sort-d-isum{
   display: none;
 }
 
+.matrixChart.icount .sort-d-icount,
+.matrixChart.count .sort-d-count,
 .matrixChart.isum .sort-d-isum,
 .matrixChart.sum .sort-d-sum,
 .matrixChart.ilabel .sort-d-ilabel,
@@ -297,6 +319,8 @@ g.matrixGroup:hover text{
   font-weight: bold;
 }
 
+.matrixChart.count .sort-count,
+.matrixChart.icount .sort-count,
 .matrixChart.label .sort-label,
 .matrixChart.ilabel .sort-label,
 .matrixChart.isum .sort-sum,
