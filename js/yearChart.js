@@ -29,30 +29,21 @@ var yearChart = function(_container, _dates, _counts, _filterFunction, _filterKe
     }),
     y_axis,
     y_count_axis,
-    svg = container.append('svg').classed('dateChart', true),
+    svg = container.append('svg').classed('dateChart', true);
 
-    texture = textures.lines()
-      .id('texture')
-      .size(4)
-      .background('#fff')
-      .stroke('rgba(0,0,0,1)')
-      .strokeWidth(1),
+    var defs = svg.append('defs');
 
-    texture_blue = textures.lines()
-      .id('texture_blue')
-      .size(4)
-      .strokeWidth(1)
-      .background('#fff')
-      .stroke("rgba(45,145,210,1)"),
+    defs.selectAll('pattern').data(['texture','texture_blue','texture_grey']).enter().append('pattern')
+      .attr('id', function(d){return d;})
+      .attr('width',5)
+      .attr('height',5)
+      .attr('patternUnits','userSpaceOnUse')
+      .append('image')
+        .attr('xlink:href', function(d){return './images/'+d+'.png'; })
+        .attr('width',5)
+        .attr('height',5);
 
-    texture_grey = textures.lines()
-      .id('texture_grey')
-      .size(4)
-      .strokeWidth(1)
-      .background('#fff')
-      .stroke("rgba(170,170,170,1)"),
-
-    g = svg.append('g')
+    var g = svg.append('g')
            .attr('transform','translate('+(padding+xOffset)+','+(2*padding)+')'),
 
     chart = svg.append('g').attr('transform','translate('+(padding+xOffset)+','+(2*padding)+')').selectAll('g').data(data).enter().append('g').on('click', function(d){
@@ -64,10 +55,6 @@ var yearChart = function(_container, _dates, _counts, _filterFunction, _filterKe
 
     chart_dates = chart.append('rect'),
     chart_counts = chart.append('rect').classed('counts',true);
-
-    svg.call(texture);
-    svg.call(texture_blue);
-    svg.call(texture_grey);
 
   function groupData(_dates, _counts){
     var data = [];

@@ -34,7 +34,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
     sumcountw = d3.scaleLinear().domain([0,Math.pow(d3.max(d3Data, function(d){ return d.count; }), root)]),
     g = svg.append('g')
            .attr('transform','translate('+(padding+xOffset)+','+(padding+yOffset)+')'),
-    groups = g.append('g').selectAll('g').data(d3Data).enter().append('g').attr('class', 'matrixGroup'),
+    groups = g.selectAll('g').data(d3Data).enter().append('g').attr('class', 'matrixGroup'),
     yLabels = groups.append('text')
       .datum(function(d,i){
         return labels.all()[i];
@@ -51,28 +51,19 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
 
     buttons = groups.append('rect').attr('x', -xOffset).classed('button',true).on('click', function(d){
       filterFunction(filterKey, d.key);
-    }),
+    });
 
-    texture = textures.lines()
-      .id('texture')
-      .size(4)
-      .background('#fff')
-      .stroke('rgba(0,0,0,1)')
-      .strokeWidth(1),
+    var defs = svg.append('defs');
 
-    texture_blue = textures.lines()
-      .id('texture_blue')
-      .size(4)
-      .strokeWidth(1)
-      .background('#fff')
-      .stroke("rgba(45,145,210,1)"),
-
-    texture_grey = textures.lines()
-      .id('texture_grey')
-      .size(4)
-      .strokeWidth(1)
-      .background('#fff')
-      .stroke("rgba(170,170,170,1)");
+    defs.selectAll('pattern').data(['texture','texture_blue','texture_grey']).enter().append('pattern')
+      .attr('id', function(d){return d;})
+      .attr('width',5)
+      .attr('height',5)
+      .attr('patternUnits','userSpaceOnUse')
+      .append('image')
+        .attr('xlink:href', function(d){return './images/'+d+'.png'; })
+        .attr('width',5)
+        .attr('height',5);
 
   function splitData(_data, _count, _labels){
     var ndata = [], nkeys = {};
@@ -194,6 +185,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
     sortButton.append('tspan').text('Anzahl').classed('sort-count',true).on('click',function(){ module.toggleSort('count'); });
 
     module.resize();
+    module.sortItems();
   };
 
   function shortenLabel(l){
@@ -217,9 +209,36 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
     blockWidth = (width-padding*2-xOffset - years.length*padding)/(years.length+1);
 
     y.range([0, blockHeight]);
-    y_count.range([0, blockHeight]);
+    y_count.range([0, blockHeight-2]);
     sumw.range([0, blockWidth]);
-    sumcountw.range([0, blockWidth]);
+    sumcountw.range([0, blockWidth-2]);
+
+    sumbg.transition()
+      .duration((init)?0:500)
+      .attr('width', blockWidth);
+
+    xLabels.transition()
+      .duration((init)?0:500)
+      .attr('x', function(d,i){
+        return (blockWidth+padding) * i + blockWidth/2;
+      });
+
+    bgs.data(function(d){return d.years;}).transition()
+      .duration((init)?0:500)
+      .attr('width', blockWidth)
+      .attr('height', blockHeight)
+      .style('fill', function(d){ return (filterYears.indexOf(d.key)>-1)?'rgba(45,145,210,0.3)':''; })
+      .attr('x', function(d){
+        return (blockWidth+padding) * years.indexOf(d.key);
+      });
+
+    buttons
+      .attr('height', blockHeight)
+      .attr('width', (blockWidth+padding)*(years.length+1)+xOffset);
+
+    sumg.transition()
+      .duration((init)?0:500)
+      .attr('transform','translate('+(years.length* (padding+blockWidth))+',0)');
 
     module.update();
   };
@@ -237,16 +256,10 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
     }
     svg.classed(sort,true);
 
-    module.update();
+    module.sortItems();
   };
 
-  module.update = function(){
-    buttons
-      .attr('height', blockHeight)
-      .attr('width', (blockWidth+padding)*(years.length+1)+xOffset);
-
-    //ToDo only update and animate what really needs animating (resize, data change, init)
-
+  module.sortItems = function(){
     groups.data(d3Data).classed('selected', function(d){
         if(filters.indexOf(cleanId(d.key))>-1){
           return true;
@@ -257,15 +270,14 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
       .attr('transform', function(d){
         return 'translate(0,'+(blockHeight+padding) * d.sort[sort]+')';
       });
+  }
 
-    sumg.data(function(d){ return [d]; })
-      .transition()
-        .duration((init)?0:500)
-        .attr('transform','translate('+(years.length* (padding+blockWidth))+',0)');
+  module.update = function(){
+    //ToDo only update and animate what really needs animating (resize, data change, init)
 
-    sumbg.transition()
-      .duration((init)?0:500)
-      .attr('width', blockWidth);
+    groups.data(d3Data);
+
+    sumg.data(function(d){ return [d]; });
 
     sumbars.data(function(d){ return [d]; })
       .transition()
@@ -278,23 +290,8 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
       .transition()
         .duration((init)?0:500)
         .attr('width', function(d,i){
-          return sumcountw(Math.pow(d.count, root))-2;
+          return sumcountw(Math.pow(d.count, root));
         });
-
-    xLabels.transition()
-      .duration((init)?0:500)
-      .attr('x', function(d,i){
-        return (blockWidth+padding) * i + blockWidth/2;
-      });
-
-    bgs.data(function(d){return d.years;}).transition()
-      .duration((init)?0:500)
-      .attr('width', blockWidth)
-      .attr('height', blockHeight)
-      .style('fill', function(d){ return (filterYears.indexOf(d.key)>-1)?'rgba(45,145,210,0.3)':''; })
-      .attr('x', function(d){
-        return (blockWidth+padding) * years.indexOf(d.key);
-      });
 
     bars.data(function(d){return d.years;}).transition()
       .duration((init)?0:500)
@@ -313,13 +310,13 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
       .duration((init)?0:500)
       .attr('width', blockWidth/2)
       .attr('height', function(d){
-        return y_count(Math.pow(d.count, root))-2;
+        return y_count(Math.pow(d.count, root));
       })
       .attr('x', function(d){
         return (blockWidth+padding) * years.indexOf(d.key) + blockWidth/2;
       })
       .attr('y', function(d){
-        return blockHeight - y_count(Math.pow(d.count, root)) + 1;
+        return blockHeight - 2 - y_count(Math.pow(d.count, root)) + 1;
       });
 
     init = false;

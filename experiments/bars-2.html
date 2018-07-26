@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <title></title>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+
+<style>
+    text{
+      font-family: Arial, sans-serif;
+      font-size:10px;
+    }
+</style>
+
+<svg width="1200px" height="1200px">
+    <g></g>
+</svg>
+
+<script>
+    var width = 1000,
+        height = 600,
+        years = [2009,2016],
+        block = 100,
+        margin = {x:20,y:50},
+        cols = 6,
+        padding = 3;
+
+
+    // Prepare our physical space
+    var g = d3.select('svg').select('g');
+
+        // Get the data from our CSV file
+    d3.json('data/columns/politikbereich.json', function(error, data) {
+        if (error) throw error;
+
+        data.forEach(function(d,i){
+            d.years.forEach(function(y,ii){
+                if(isNaN(y.money)){
+                    data[i].years[ii].money = 0;
+                }
+                if(isNaN(y.count)){
+                    data[i].years[ii].count = 0;
+                }
+            });
+        });
+
+         var y = {
+                money: d3.scaleLinear().range([0,block]).domain([0,d3.max(data, function(d){ return d3.max(d.years, function(d){  return d.money/4; })})]),
+                count: d3.scaleLinear().range([0,block]).domain([0,d3.max(data, function(d){ return d3.max(d.years, function(d){  return d.count/4; })})])
+            };
+
+        var x = d3.scaleLinear().domain([0, (years[1]-years[0])]).range([0,block]),
+            bar = (block-((years[1]-years[0])*padding))/(years[1]-years[0]+1);
+
+        data.forEach(function(d,i){
+            var gy = Math.floor(i/cols),
+                gx = i - gy*cols,
+                gblock = g.append('g').attr('transform', 'translate('+ (gx * (block+margin.x) + margin.x) +' , '+ (gy * (block+margin.y) + margin.y) +')');
+
+            gblock.append('rect')
+                .attr('x',-5)
+                .attr('y',-5)
+                .attr('width',block+10)
+                .attr('height',block+25)
+                .style('fill','rgba(0,0,0,0.1)')
+
+            gblock.append('g').selectAll('rect').data(d.years).enter().append('rect')
+                .attr('x', function(d,i){
+                    return i*(bar+padding);
+                })
+                .attr('width', bar)
+                .attr('y', function(d){
+                    return block-y.money(d.money);
+                })
+                .attr('height', function(d){
+                    return y.money(d.money);
+                })
+                .style('stroke', 'none')
+                .style('fill', 'rgba(0,0,0,0.5)');
+
+            gblock.append('text').text(d.key.substr(0,20)).attr('transform','translate(0,'+(block+13)+')');
+
+        });
+        
+    });
+</script>

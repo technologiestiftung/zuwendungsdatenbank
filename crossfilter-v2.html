@@ -52,8 +52,8 @@
     </div>
   </div>
 
-<script src="d3.v4.min.js"></script>
-<script src="js/textures/dist/textures.js"></script>
+<script src="js/topojson-client.min.js"></script>
+<script src="js/d3.v4.min.js"></script>
 <script src="js/d3-history/d3-history.min.js"></script>
 <script src="js/event.js"></script>
 <script src="js/crossfilter/crossfilter.min.js"></script>
@@ -146,23 +146,34 @@ var filterFunction = function(key, value, silent){
 };
 
 d3.queue()
-  .defer(d3.json, "./data/plz.json")
+  .defer(d3.json, "./data/plz.topojson")
   .defer(d3.csv, "./data/min.csv")
   .defer(d3.csv, "./data/dict_geber.csv")
+  .defer(d3.csv, "./data/dict_name.csv")
+  .defer(d3.csv, "./data/dict_zweck.csv")
   .defer(d3.csv, "./data/dict_plz.csv")
   .defer(d3.csv, "./data/dict_politikbereich.csv")
-  .await(function(error, plz, funds, dict_geber, dict_plz, dict_politikbereich){
+  .await(function(error, plz, funds, dict_geber, dict_name, dict_zweck, dict_plz, dict_politikbereich){
+
+  plz = topojson.feature(plz, plz.objects.plz);
 
   // A little coercion, since the CSV is untyped.
   funds.forEach(function(d, i) {
     d.index = i;
     d.date = new Date(d.jahr);
     d.betrag = +d.betrag;
+
+    // if((d.name in dict_name)){
+    //   d.name = dict_name[d.name].label
+    // }
+
+    // if((d.zweck in dict_zweck)){
+    //   d.zweck = dict_zweck[d.zweck].label
+    // }
+
   });
 
   //id;name;geber;art;jahr;anschrift;politikbereich;zweck;betrag;empfaengerid;plz;city;street
-
-
 
   // Create the crossfilter for the relevant dimensions and groups.
   fund = crossfilter(funds);
@@ -235,7 +246,7 @@ d3.queue()
     map_chart_years[i].init();
   }
 
-  table = preview(d3.select('#preview tbody'), fund, {geber:dict_geber, politikbereich:dict_politikbereich});
+  table = preview(d3.select('#preview tbody'), fund, {zweck:dict_zweck, name:dict_name, geber:dict_geber, politikbereich:dict_politikbereich });
   table.init();
   d3.selectAll('.next').on('click', function(){ table.next(); });
   d3.selectAll('.prev').on('click', function(){ table.prev(); });
