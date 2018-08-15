@@ -1,10 +1,12 @@
 /* --------- PIPELINE --------- */
 
+const extension = '-2017-ckan'
+
 let fs = require('fs'),
 	d3 = require('d3'),
 	dsvParse = d3.dsvFormat(';'),
 	postcode = require('../data/plz.json'),
-	yearRange = [2009,2016],
+	yearRange = [2009,2017],
 	//TODO: test against fuzzy
 	strSim = require('string-similarity'),
 	fuzzy = require('fuzzyset.js')
@@ -42,7 +44,7 @@ function cleanData(){
 
 	let cleanCSV = []
 
-	let data = fs.readFileSync('../data/all.csv', 'utf8')
+	let data = fs.readFileSync('../data/all'+extension+'.csv', 'utf8')
 
     let lines = data.split(/\r\n|\n|\r/)
 
@@ -71,7 +73,7 @@ function cleanData(){
 		clean += cl
 	})
 
-	fs.writeFileSync('../data/temp/all_clean.csv', cleanStr(clean), 'utf8')
+	fs.writeFileSync('../data/temp/all_clean'+extension+'.csv', cleanStr(clean), 'utf8')
 
 }
 

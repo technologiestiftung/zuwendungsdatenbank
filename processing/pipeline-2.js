@@ -1,10 +1,12 @@
 /* --------- PIPELINE --------- */
 
+const extension = '-2017-ckan'
+
 let fs = require('fs'),
 	d3 = require('d3'),
 	dsvParse = d3.dsvFormat(';'),
 	postcode = require('../data/plz.json'),
-	yearRange = [2009,2016],
+	yearRange = [2009,2017],
 	//TODO: test against fuzzy
 	strSim = require('string-similarity'),
 	fuzzy = require('fuzzyset.js')
@@ -13,7 +15,7 @@ let fs = require('fs'),
 
 function postcodeData(){
 
-	let data = fs.readFileSync('../data/temp/all_clean_excel.csv', 'utf8'),
+	let data = fs.readFileSync('../data/temp/all_clean_merge'+extension+'-excel.csv', 'utf8'),
 	csv = dsvParse.parse(data)
 
 	let post_keys = {}
@@ -117,8 +119,8 @@ function postcodeData(){
 
 	})
 
-	fs.writeFileSync('../data/temp/plz_w_data.geojson', JSON.stringify(postcode), 'utf8')
-	fs.writeFileSync('../data/temp/plz_external.json', JSON.stringify(external), 'utf8')
+	fs.writeFileSync('../data/temp/plz_w_data'+extension+'.geojson', JSON.stringify(postcode), 'utf8')
+	fs.writeFileSync('../data/temp/plz_external'+extension+'.json', JSON.stringify(external), 'utf8')
 
 	//group by empfaengerid & empfaengertyp
 	//merge name, city, plz
@@ -221,7 +223,7 @@ function postcodeData(){
 		}
 	})
 
-	fs.writeFileSync('../data/temp/all_clean_w_plz.csv', ncsv, 'utf8')
+	fs.writeFileSync('../data/temp/all_clean_w_plz'+extension+'.csv', ncsv, 'utf8')
 
 	//NEXT
 	clusterData()
@@ -232,7 +234,7 @@ postcodeData();
 /* --------- cluster.js --------- */
 
 function clusterData(){
-	let merges = 0, yearRange = [2009,2016], merger = {geber:[
+	let merges = 0, yearRange = [2009,2017], merger = {geber:[
 		['Senatsverwaltung für Justiz','Senatsverwaltung für Justiz und Verbraucherschutz'],
 		['Senatsverwaltung für Stadtentwicklung und Umwelt','Senatsverwaltung für Stadtentwicklung','Senatsverwaltung für Gesundheit, Umwelt und Verbraucherschutz'],
 		['Senatsverwaltung für Wirtschaft, Technologie und Forschung','Senatsverwaltung für Wirtschaft, Technologie und Frauen'],
@@ -251,7 +253,7 @@ function clusterData(){
 
 	let cleanCSV = []
 
-	let data = fs.readFileSync('../data/temp/all_clean_w_plz.csv', 'utf8')
+	let data = fs.readFileSync('../data/temp/all_clean_w_plz'+extension+'.csv', 'utf8')
 	let csv = dsvParse.parse(data)
 
 	var cols = ["geber","art","politikbereich","city","plz","empfaengertyp","empfaengerid","zweck","name"], //name
@@ -347,7 +349,7 @@ function clusterData(){
 	})
 
 	cols.forEach(c=>{
-		fs.writeFileSync('../data/columns/'+c+'.json', JSON.stringify(colCluster[c].sort(function(a,b){
+		fs.writeFileSync('../data/columns/'+c+''+extension+'.json', JSON.stringify(colCluster[c].sort(function(a,b){
 			if(a.key < b.key){
 				return 1
 			}else if(a.key > b.key){
@@ -357,7 +359,7 @@ function clusterData(){
 		})), 'utf8')
 	})
 
-	fs.writeFileSync('../data/temp/clusterKeys.json', JSON.stringify(clusterKeys), 'utf8')
+	fs.writeFileSync('../data/temp/clusterKeys'+extension+'.json', JSON.stringify(clusterKeys), 'utf8')
 
 	
 	//NEXT
@@ -368,8 +370,8 @@ function clusterData(){
 
 
 function shrinkData(){
-	let json = JSON.parse(fs.readFileSync('../data/temp/clusterKeys.json', 'utf8')),
-		csv = dsvParse.parse(fs.readFileSync('../data/temp/all_clean_w_plz.csv', 'utf8'))
+	let json = JSON.parse(fs.readFileSync('../data/temp/clusterKeys'+extension+'.json', 'utf8')),
+		csv = dsvParse.parse(fs.readFileSync('../data/temp/all_clean_w_plz'+extension+'.csv', 'utf8'))
 
 
 	let keep = ['jahr','geber','politikbereich','betrag','plz','name','zweck',"empfaengertyp","empfaengerid"]
@@ -403,7 +405,7 @@ function shrinkData(){
 					tcsv += '"'
 				}
 			}
-			fs.writeFileSync('../data/dict_'+k+'.csv', tcsv, 'utf8')
+			fs.writeFileSync('../data/dict_'+k+''+extension+'.csv', tcsv, 'utf8')
 		}
 	})
 
@@ -420,5 +422,5 @@ function shrinkData(){
 		})
 	})
 
-	fs.writeFileSync('../data/min.csv', ncsv, 'utf8')
+	fs.writeFileSync('../data/min'+extension+'.csv', ncsv, 'utf8')
 }

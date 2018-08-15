@@ -6,13 +6,16 @@ analysis and visualisation of the funding database of berlin
 http://fbinter.stadt-berlin.de/fb/berlin/service.jsp?id=a_adressenberlin@senstadt&type=FEED
 
 ## Funding data
-https://www.berlin.de/sen/finanzen/service/zuwendungsdatenbank/
+~~https://www.berlin.de/sen/finanzen/service/zuwendungsdatenbank/~~
+
+https://datenregister.berlin.de/dataset/simple_search_wwwberlindesenfinanzenservicezuwendungsdatenbank
 
 ## Data Processing
 
-_1. clean.js_
+1. pipeline-1.js
 2. Open in Excel and Save as UTF8-CSV (yes, don't ask me why - it works)
-3. cluster.js
+3. pipeline-2.js
+
 
 ## TODO
 
