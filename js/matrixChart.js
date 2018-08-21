@@ -47,7 +47,7 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
     sumbg = sumg.append('rect').attr('height',blockHeight).classed('sumbg', true),
     
     sumbars = sumg.selectAll('rect.sumbar').data(function(d){ return [d]; }).enter().append('rect').attr('height',blockHeight/2).classed('sumbar', true),
-    sumbars_count = sumg.selectAll('rect.count').data(function(d){ return [d]; }).enter().append('rect').attr('x',1).attr('height',blockHeight/2).attr('y',blockHeight/2).classed('count', true),
+    sumbars_count = sumg.selectAll('rect.count').data(function(d){ return [d]; }).enter().append('rect').attr('x',0).attr('height',blockHeight/2).attr('y',blockHeight/2).classed('count', true),
 
     buttons = groups.append('rect').attr('x', -xOffset).classed('button',true).on('click', function(d){
       filterFunction(filterKey, d.key);
@@ -209,9 +209,9 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
     blockWidth = (width-padding*2-xOffset - years.length*padding)/(years.length+1);
 
     y.range([0, blockHeight]);
-    y_count.range([0, blockHeight-2]);
+    y_count.range([0, blockHeight]);
     sumw.range([0, blockWidth]);
-    sumcountw.range([0, blockWidth-2]);
+    sumcountw.range([0, blockWidth]);
 
     sumbg.transition()
       .duration((init)?0:500)
@@ -316,8 +316,10 @@ var matrixChart = function(_container, _labels, _data, _dict, _count, _filterFun
         return (blockWidth+padding) * years.indexOf(d.key) + blockWidth/2;
       })
       .attr('y', function(d){
-        return blockHeight - 2 - y_count(Math.pow(d.count, root)) + 1;
+        return blockHeight - y_count(Math.pow(d.count, root));
       });
+
+    module.sortItems()
 
     init = false;
   };

@@ -18,8 +18,25 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
       .attr('height', height)
       .attr("viewBox", "0 0 "+width+" "+height)
       .attr("preserveAspectRatio", "xMidYMid meet"),
+    defs = svg.append('defs').html('<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">'+
+      '<stop offset="0%" style="stop-color:rgba(0,0,0,0.1);stop-opacity:1" />'+
+      '<stop offset="100%" style="stop-color:rgba(0,0,0,1);stop-opacity:1" />'+
+    '</linearGradient>'),
     map = svg.append('g'),
     mapOverlay = svg.append('g'),
+    legend = svg.append('g'),
+    legend_rect = legend.append('rect')
+      .style('fill', 'url(#grad1)')
+      .attr('height',10),
+    legend_txt1 = legend.append('text')
+      .text('0 €')
+      .attr('dy',20)
+      .style('font-size',10),
+    legend_txt2 = legend.append('text')
+      .text(currency(data.top(1)[0].value).replace('&nbsp;',' '))
+      .attr('dy',20)
+      .style('font-size',10)
+      .attr('text-anchor', 'end'),
     polygons = null,
     overlays = null,
     init = true,
@@ -63,7 +80,7 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
         filterFunction(filterKey, d.key);
       });
 
-    module.update();
+      module.resize();
   };
 
   module.update = function(){
@@ -81,9 +98,22 @@ var mapChart = function(_container, _geojson, _data, _dict, _filterFunction, _fi
     });
 
     init = false;
+
+    legend_txt2.text(currency(data.top(1)[0].value).replace('&nbsp;',' '))
   };
 
   module.resize = function(){
+    //width = container.node().offsetWidth;
+
+    console.log(width, height)
+
+    legend.attr('transform', `translate(${width*0.25},${height-50})`)
+
+    legend_rect
+      .attr('width', width*0.5)
+
+    legend_txt2.attr('dx', width*0.5)
+
     module.update();
   };
 

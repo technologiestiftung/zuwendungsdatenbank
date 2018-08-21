@@ -14,7 +14,8 @@
     <div id="artChart"></div>
     <div id="maprow">
     </div>
-    <input type="text" id="search" placeholder="Namens-Suche" />
+    <input type="text" class="search" id="search" placeholder="Namens-Suche" />
+    <input type="text" class="search" id="search_zweck" placeholder="Zweck-Suche" />
     <div  id="pagination" class="pagination">
       <a class="prev">&laquo; zurück</a>
       <span>x von y Förderungen</span>
@@ -145,15 +146,27 @@ var filterFunction = function(key, value, silent){
   }
 };
 
+let extension = '-2017-ckan'
+
 d3.queue()
   .defer(d3.json, "./data/plz.topojson")
-  .defer(d3.csv, "./data/min.csv")
-  .defer(d3.csv, "./data/dict_geber.csv")
-  .defer(d3.csv, "./data/dict_name.csv")
-  .defer(d3.csv, "./data/dict_zweck.csv")
-  .defer(d3.csv, "./data/dict_plz.csv")
-  .defer(d3.csv, "./data/dict_politikbereich.csv")
+  .defer(d3.csv, "./data/min"+extension+".csv")
+  .defer(d3.csv, "./data/dict_geber"+extension+".csv")
+  .defer(d3.csv, "./data/dict_name"+extension+".csv")
+  .defer(d3.csv, "./data/dict_zweck"+extension+".csv")
+  .defer(d3.csv, "./data/dict_plz"+extension+".csv")
+  .defer(d3.csv, "./data/dict_politikbereich"+extension+".csv")
   .await(function(error, plz, funds, dict_geber, dict_name, dict_zweck, dict_plz, dict_politikbereich){
+
+  let name_keys = {}
+  dict_name.forEach((d,di)=>{
+    name_keys[d.id] = di
+  })
+
+  let zweck_keys = {}
+  dict_zweck.forEach((d,di)=>{
+    zweck_keys[d.id] = di
+  })
 
   plz = topojson.feature(plz, plz.objects.plz);
 
@@ -186,7 +199,8 @@ d3.queue()
   dates = date.group().reduceSum(function(d) { return d.betrag; });
   dates_count = date.group().reduceCount();
 
-  names = fund.dimension(function(d) { return d.name.toLowerCase(); });
+  names = fund.dimension(function(d) { return dict_name[name_keys[d.name]].label.toLowerCase(); });
+  zwecke = fund.dimension(function(d) { return dict_zweck[zweck_keys[d.zweck]].label.toLowerCase(); });
 
   postcode = fund.dimension(function(d) { return d.plz; });
   postcodes = postcode.group().reduceSum(function(d) { return d.betrag; });
@@ -219,6 +233,7 @@ d3.queue()
   postcodeYears[2014] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2014)?d.betrag:0); });
   postcodeYears[2015] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2015)?d.betrag:0); });
   postcodeYears[2016] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2016)?d.betrag:0); });
+  postcodeYears[2017] = postcode.group().reduceSum(function(d) { return ((d.jahr == 2017)?d.betrag:0); });
   //}
 
   filter = {date:[],politikbereich:[],geber:[],postcode:[]};
@@ -239,7 +254,7 @@ d3.queue()
     map_chart.init();
 
   map_chart_years = [];
-  for(var i = 2009; i<=2016; i++){
+  for(var i = 2009; i<=2017; i++){
     var container = d3.select('#maprow').append('div').attr('id', 'map'+i);
     container.append('span').classed('year-title',true).text(i);
     map_chart_years[i] = mapChart(container, plz, postcodeYears[i], dict_plz, filterFunction, 'postcode');
@@ -266,6 +281,23 @@ d3.queue()
 
       updateCharts();
   }, 200));
+
+  d3.select('#search_zweck').on('keyup', debouncer(function(e){
+      var v = d3.select('#search_zweck').property('value');
+      if(v.length > 2){
+        zwecke.filter(function(d){
+          if(d.indexOf(v.toLowerCase())>-1){
+            return true;
+          }
+          return false;
+        });
+      }else{
+        zwecke.filterAll();
+      }
+
+      updateCharts();
+  }, 200));
+
 
   d3.select(window).on('resize', debouncer(function(e){
     year_chart.resize();

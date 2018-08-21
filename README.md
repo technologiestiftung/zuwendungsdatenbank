@@ -14,7 +14,9 @@ https://datenregister.berlin.de/dataset/simple_search_wwwberlindesenfinanzenserv
 
 1. pipeline-1.js
 2. Open in Excel and Save as UTF8-CSV (yes, don't ask me why - it works)
-3. pipeline-2.js
+3. merge.js
+4. pipeline-2.js
+5. pipeline-3.js
 
 
 ## TODO

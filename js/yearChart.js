@@ -18,11 +18,11 @@ var yearChart = function(_container, _dates, _counts, _filterFunction, _filterKe
     yCountAxis = d3.axisRight().ticks(10).scale(y_count),
     yAxis = d3.axisLeft().ticks(10).scale(y).tickFormat(function(d){
       if(d >= 1000000000){
-        return (d/1000000000).toFixed(2) + ' B €';
+        return (d/1000000000).toFixed(2) + ' Mrd. €';
       }else if(d >= 1000000){
-        return (d/1000000).toFixed(0) + ' M €';
+        return (d/1000000).toFixed(0) + ' Mio. €';
       }else if(d >= 1000){
-        return (d/1000).toFixed(2) + ' K €';
+        return (d/1000).toFixed(2) + ' Tsd. €';
       }else{
         return d;
       }
@@ -107,9 +107,9 @@ var yearChart = function(_container, _dates, _counts, _filterFunction, _filterKe
     chart_counts
       .transition().duration((init)?0:500)
         .attr('x', barWidth/2)
-        .attr('y',function(d,i){ return y_count(d.count.value)+1; })
+        .attr('y',function(d,i){ return y_count(d.count.value); })
         .attr('width',function(d,i){ return barWidth/2; })
-        .attr('height',function(d,i){ return height-3*padding-yOffset-y_count(d.count.value)-1; });
+        .attr('height',function(d,i){ return height-3*padding-yOffset-y_count(d.count.value); });
 
     y_axis.transition()
       .duration((init)?0:500)
