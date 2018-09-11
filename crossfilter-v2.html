@@ -6,8 +6,17 @@
 <link rel="stylesheet" type="text/css" href="css/main.css" />
 </head>
 <body>
+  <div id="loader">
+    <span id="loader-icon"></span><br />
+    <span id="loader-text">Zuwendungen seid 2009 werden geladen:</span><br />
+    <span id="loader-funds"></span>
+  </div>
   <div id="container">
     <div id="sumChart"></div>
+    <div id="intro">
+      <img src="images/main_legend.svg" alt="" />
+      <button id="reset">Filter zurücksetzen</button>      
+    </div>
     <div id="yearChart"></div>
     <div id="mapChart"></div>
     <div id="geberChart"></div>
@@ -24,12 +33,12 @@
     <table id="preview">
       <thead>
         <tr>
-          <th>Jahr</th>
-          <th>Name</th>
-          <th>Bereich</th>
-          <th>Geber</th>
-          <th>Zweck</th>
-          <th class="betrag">Summe</th>
+          <th data-key="jahr" class="th-label th-jahr">Jahr</th>
+          <th data-key="name" class="th-label th-name">Name</th>
+          <th data-key="politikbereich" class="th-label th-politikbereich">Bereich</th>
+          <th data-key="geber" class="th-label th-geber">Geber</th>
+          <th data-key="zweck" class="th-label th-zweck">Zweck</th>
+          <th data-key="betrag" class="th-label th-betrag betrag">Summe</th>
         </tr>
       </thead>
       <tbody>
@@ -37,12 +46,12 @@
       </tbody>
       <tfoot>
         <tr>
-          <th>Jahr</th>
-          <th>Name</th>
-          <th>Bereich</th>
-          <th>Geber</th>
-          <th>Zweck</th>
-          <th class="betrag">Summe</th>
+          <th data-key="jahr" class="th-label th-jahr">Jahr</th>
+          <th data-key="name" class="th-label th-name">Name</th>
+          <th data-key="politikbereich" class="th-label th-politikbereich">Bereich</th>
+          <th data-key="geber" class="th-label th-geber">Geber</th>
+          <th data-key="zweck" class="th-label th-zweck">Zweck</th>
+          <th data-key="betrag" class="th-label th-betrag betrag">Summe</th>
         </tr>
       </tfoot>
     </table>
@@ -97,6 +106,7 @@ function updateFilter(){
 }
 
 var filterFunction = function(key, value, silent){
+  //console.log('filterFunction', key, value, silent)
   //fix bug with double zero digits
   value = cleanId(value);
 
@@ -146,17 +156,105 @@ var filterFunction = function(key, value, silent){
   }
 };
 
+d3.select('#reset').on('click', function(){
+  for(var key in state){
+    var states = state[key]
+
+    if(!Array.isArray(states)) states = states.split(',')
+
+    if(state[key].length>0){
+      states.forEach(s=>{
+        filterFunction(key, s, true);
+      })
+    }
+
+    state[key] = [];
+  }
+
+  dispatcher.call('action', this, createURL());
+});
+
 let extension = '-2017-ckan'
 
+let fileLoads = {}
+
+let callbackLoad = (type, file, loadID, size, callback) => {
+  d3[type](file, callback)
+    .on('progress', evt=>{
+      if(!(loadID in fileLoads)) fileLoads[loadID] = {total:size, loaded:evt.loaded}
+      fileLoads[loadID].loaded = evt.loaded
+      updateProgress()
+    })
+}
+
+let updateProgress = ()=>{
+  let total = 0, loaded = 0
+  for(let loadID in fileLoads){
+    total += fileLoads[loadID].total
+    loaded += fileLoads[loadID].loaded
+  }
+
+  loaderFunds.html(currency(Math.round(loadScale(loaded/total))));
+  foreground.attr('d', d=>{
+    d.endAngle = loadCoinScale(loaded/total)
+    return arc(d);
+  });
+  
+}
+
+d3.select('#container').style('display','none')
+
+var icon = d3.select('#loader-icon').append('svg').attr('width',100).attr('height',100).append('g').attr('transform', 'translate(50,50)'),
+  loadScale = d3.scaleLinear().range([0,14145702625]).domain([0,1]),
+  loadCoinScale = d3.scaleLinear().range([0,Math.PI*2]).domain([0,1]),
+  loaderFunds = d3.select('#loader-funds'),
+  arcBG = d3.arc()
+      .innerRadius(42)
+      .outerRadius(48)
+      .startAngle(0),
+  arc = d3.arc()
+      .innerRadius(43)
+      .outerRadius(47)
+      .startAngle(0),
+  background = icon.append('path')
+    .datum({endAngle: Math.PI*2})
+      .style("fill", "#ddd")
+      .attr("d", arcBG),
+  foreground = icon.append("path")
+      .datum({endAngle: 0})
+      .style("fill", "#777")
+      .attr("d", arc);
+
+icon.append('text').attr('text-anchor','middle').style('fill','#777').style('font-size',72).text('€').attr('dy',24);
+
+function arcTween(newAngle) {
+  return function(d) {
+    var interpolate = d3.interpolate(d.endAngle, newAngle);
+    return function(t) {
+      d.endAngle = interpolate(t);
+      return arc(d);
+    };
+  };
+}
+
 d3.queue()
-  .defer(d3.json, "./data/plz.topojson")
-  .defer(d3.csv, "./data/min"+extension+".csv")
-  .defer(d3.csv, "./data/dict_geber"+extension+".csv")
-  .defer(d3.csv, "./data/dict_name"+extension+".csv")
-  .defer(d3.csv, "./data/dict_zweck"+extension+".csv")
-  .defer(d3.csv, "./data/dict_plz"+extension+".csv")
-  .defer(d3.csv, "./data/dict_politikbereich"+extension+".csv")
+  .defer(callbackLoad, 'json', "./data/plz.topojson","plz",333505)
+  .defer(callbackLoad, 'csv', "./data/min"+extension+".csv","min",2846095)
+  .defer(callbackLoad, 'csv', "./data/dict_geber"+extension+".csv","dict_geber",1897)
+  .defer(callbackLoad, 'csv', "./data/dict_name"+extension+".csv","dict_name",376613)
+  .defer(callbackLoad, 'csv', "./data/dict_zweck"+extension+".csv","dict_zweck",2614485)
+  .defer(callbackLoad, 'csv', "./data/dict_plz"+extension+".csv","dict_plz",6635)
+  .defer(callbackLoad, 'csv', "./data/dict_politikbereich"+extension+".csv","dict_politikbereich",500)
   .await(function(error, plz, funds, dict_geber, dict_name, dict_zweck, dict_plz, dict_politikbereich){
+
+  loaderFunds.html(currency(Math.round(loadScale(1))));
+  foreground.attr('d', d=>{
+    d.endAngle = Math.PI*2
+    return arc(d);
+  });
+
+  d3.select('#loader').transition().duration(300).style('display','none')
+  d3.select('#container').style('display','block')
 
   let name_keys = {}
   dict_name.forEach((d,di)=>{
@@ -265,6 +363,9 @@ d3.queue()
   table.init();
   d3.selectAll('.next').on('click', function(){ table.next(); });
   d3.selectAll('.prev').on('click', function(){ table.prev(); });
+  d3.selectAll('#preview th').on('click', function(){
+    table.setSort(d3.select(this).attr('data-key'))
+  })
 
   d3.select('#search').on('keyup', debouncer(function(e){
       var v = d3.select('#search').property('value');

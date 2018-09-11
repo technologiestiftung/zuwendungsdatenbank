@@ -3,6 +3,20 @@ body{
   font-size:12px;
 }
 
+#loader{
+  position: absolute;
+  top:50%;
+  left:50%;
+  width:150px;
+  margin-left:-75px;
+  margin-top:-75px;
+  text-align:center;
+}
+
+#loader-funds{
+  font-size:24px;
+}
+
 #geberChart{
   width:50%;
   float:left;
@@ -102,6 +116,18 @@ tbody tr:hover{
 
 td{
   padding: 4px 4px;
+}
+
+th.ASC, th.DESC{
+  color:rgba(45,145,210,1); 
+}
+
+th.ASC::before{
+  content:'↑';
+}
+
+th.DESC::before{
+  content:'↓';
 }
 
 .pagination{
