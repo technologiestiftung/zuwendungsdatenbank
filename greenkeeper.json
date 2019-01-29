@@ -1,0 +1,11 @@
+{
+  "groups": {
+    "default": {
+      "packages": [
+        "js/crossfilter/package.json",
+        "js/textures/package.json",
+        "package.json"
+      ]
+    }
+  }
+}
