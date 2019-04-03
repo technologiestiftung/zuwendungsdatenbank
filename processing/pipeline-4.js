@@ -80,6 +80,28 @@ data.forEach(d=>{
 	}
 })
 
+//-------- START: CREATE EMPFÄNGERIDS FOR THOSE WITHOUT IT
+
+let empfaengerids = dsvParse.parse(fs.readFileSync('../data/dict_empfaengerid'+file_key+'.csv', 'utf8'))
+
+let the_undefined = (empfaengerids.filter(d=>(d.label == 'undefined' || d.label == undefined))).map(d=>d.id)
+
+let start = 9999999
+
+let ids_by_name = {}
+
+data.forEach(d=>{
+  if(the_undefined.indexOf(d.empfaengerid)>-1){
+    if(!(d.name in ids_by_name)){
+      ids_by_name[d.name] = start
+      start++
+    }
+    d.empfaengerid = ids_by_name[d.name]
+  }
+})
+
+//-------- END: CREATE EMPFÄNGERIDS FOR THOSE WITHOUT IT
+
 let data_csv = data.columns.join(',')
 
 data.forEach(d=>{
