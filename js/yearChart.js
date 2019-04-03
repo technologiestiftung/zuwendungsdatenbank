@@ -1,6 +1,7 @@
-var yearChart = function(_container, _dates, _counts, _filterFunction, _filterKey){
+var yearChart = function(_container, _dates, _counts, _filterFunction, _filterKey, _tooltip){
 
   var module = {},
+    tooltip = _tooltip,
     filterFunction = _filterFunction,
     filterKey = _filterKey,
     filters = [],
@@ -48,13 +49,35 @@ var yearChart = function(_container, _dates, _counts, _filterFunction, _filterKe
 
     chart = svg.append('g').attr('transform','translate('+(padding+xOffset)+','+(2*padding)+')').selectAll('g').data(data).enter().append('g').on('click', function(d){
         filterFunction(filterKey, d.date.key);
-      }).classed('dategroup', true),
-
+        updateToolTip(d3.event.pageX,d3.event.pageY,d);
+      }).classed('dategroup', true)
+      .on('mousemove', d=>{ 
+        tooltip.move({x:d3.event.pageX,y:d3.event.pageY}); 
+      })
+      .on('mouseover', d=>{
+        updateToolTip(d3.event.pageX,d3.event.pageY,d);
+      }).on('mouseout', d=>{ 
+        tooltip.hide(); 
+      }),
     x_label = g.append('text').text('Summe (€)').style('font-weight','bold').attr('text-anchor','end'),
     x_right_label = g.append('text').text('Anzahl').style('font-weight','bold'),
-
     chart_dates = chart.append('rect'),
     chart_counts = chart.append('rect').classed('counts',true);
+
+  function updateToolTip(x,y,d){
+    let showPercentage = false;
+    if(filters.length == 0 || filters.indexOf(d.date.key)>-1){
+      showPercentage = true;
+    }
+
+    tooltip.direction('horizontal')
+    tooltip.show({
+      title:d.count.key,
+      body:`Summe in €:<br /><i>${currency(d.date.value)}`+ ((showPercentage)? `&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;${(d.date.value/all.value()*100).toFixed(2)}%`: '') + `</i><br><br />Anzahl Förderprojekte:<br /><i>${d.count.value}`+ ((showPercentage)? `&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;${(d.count.value/all_groups.value()*100).toFixed(2)}%`: '') + `</i>`,
+      x:x,
+      y:y
+    });
+  }
 
   function groupData(_dates, _counts){
     var data = [];
