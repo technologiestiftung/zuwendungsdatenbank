@@ -836,5 +836,5 @@ preload(
     "m-r-t@2x",
     "b-l-t@2x",
     "b-m-t@2x",
-    "b-r-t@2x"][
+    "b-r-t@2x"]
 )
