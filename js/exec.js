@@ -799,7 +799,7 @@ function preload(img) {
 }
 
 preload(
-    "t-l@2x",
+    ["t-l@2x",
     "t-m@2x",
     "t-r@2x",
     "m-l@2x",
@@ -836,5 +836,5 @@ preload(
     "m-r-t@2x",
     "b-l-t@2x",
     "b-m-t@2x",
-    "b-r-t@2x"
+    "b-r-t@2x"][
 )
