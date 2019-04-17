@@ -1,0 +1,1 @@
+"use strict";var state={};function retrieveUrl(){state={};var t=window.location.href.split("?");t.length>1&&t[1].split("&").forEach(function(t){var e=t.split("=");""==e[1]?state[e[0]]=[]:state[e[0]]=e[1].split(",")});updateFilter()}window.addEventListener("popstate",function(){retrieveUrl()});var dispatcher=d3.history("action");dispatcher.on("action",function(){updateUI()});

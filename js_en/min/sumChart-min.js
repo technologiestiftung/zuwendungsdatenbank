@@ -1,0 +1,1 @@
+"use strict";var sumChart=function(n,t){var a={},u=t,r=n.append("span").attr("id","sum");return a.init=function(){a.update()},a.data=function(n){u=n,a.update()},a.update=function(){r.html("<span>Overall sum currently shown:</span><br />"+currency(u.value()))},a};
