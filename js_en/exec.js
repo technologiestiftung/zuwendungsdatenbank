@@ -408,7 +408,7 @@ function buildCrossFilter() {
 
         case 2:
 
-          empfaenger_root = fund.dimension(function(d) { return d.empfaengerid; });
+          var empfaenger_root = fund.dimension(function(d) { return d.empfaengerid; });
           empfaenger = empfaenger_root.group();
           names_sum = empfaenger_root.group().reduceSum(function(d) { return d.betrag; });
           names_count = empfaenger_root.group().reduceCount();
@@ -790,7 +790,7 @@ function updateCharts(){
 
 var images = new Array()
 function preload() {
-    for (i = 0; i < preload.arguments.length; i++) {
+    for (var i = 0; i < preload.arguments.length; i++) {
         images[i] = new Image()
         images[i].src = './images/'+preload.arguments[i]+'.png'
     }
