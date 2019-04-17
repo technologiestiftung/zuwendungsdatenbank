@@ -22,8 +22,11 @@ var binChart = function binChart(_container, _bins, _title, _filterFunction, _fi
     if (_typeof(total) == 'object') total = total.value;
     return total + num.value;
   })]),
-      svg = container.append('svg').classed('bin_chart', true);
-  defs = svg.append('defs'), color = d3.scaleLinear().domain([data[0].from, data[data.length - 1].to]).range(['rgba(11,138,221,0.1)', 'rgba(11,138,221,1)']), color_red = d3.scaleLinear().domain([data[0].from, data[data.length - 1].to]).range(['rgba(231,4,51,0.1)', 'rgba(231,4,51,1)']), defs.selectAll('linearGradient.blue').data(data).enter().append('linearGradient').attr('class', 'blue').attr('id', function (d, i) {
+      svg = container.append('svg').classed('bin_chart', true),
+      defs = svg.append('defs'),
+      color = d3.scaleLinear().domain([data[0].from, data[data.length - 1].to]).range(['rgba(11,138,221,0.1)', 'rgba(11,138,221,1)']),
+      color_red = d3.scaleLinear().domain([data[0].from, data[data.length - 1].to]).range(['rgba(231,4,51,0.1)', 'rgba(231,4,51,1)']);
+  defs.selectAll('linearGradient.blue').data(data).enter().append('linearGradient').attr('class', 'blue').attr('id', function (d, i) {
     return "binGrad".concat(i, "-").concat(uid);
   }).attr('x1', '0%').attr('x2', '0%').attr('y1', '0%').attr('y2', '100%').html(function (d) {
     return "<stop offset=\"0%\" style=\"stop-color:".concat(color(d.from), ";stop-opacity:1\" /><stop offset=\"100%\" style=\"stop-color:").concat(color(d.to), ";stop-opacity:1\" />");

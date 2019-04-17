@@ -19,7 +19,7 @@ var binChart = function(_container, _bins, _title, _filterFunction, _filterKey){
     svg = container.append('svg').classed('bin_chart', true),
     defs = svg.append('defs'),
     color = d3.scaleLinear().domain([data[0].from, data[data.length-1].to]).range(['rgba(11,138,221,0.1)','rgba(11,138,221,1)']),
-    color_red = d3.scaleLinear().domain([data[0].from, data[data.length-1].to]).range(['rgba(231,4,51,0.1)','rgba(231,4,51,1)']),
+    color_red = d3.scaleLinear().domain([data[0].from, data[data.length-1].to]).range(['rgba(231,4,51,0.1)','rgba(231,4,51,1)'])
 
     defs.selectAll('linearGradient.blue').data(data).enter().append('linearGradient')
       .attr('class','blue')
