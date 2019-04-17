@@ -48,7 +48,7 @@ d3.select('#anti-search').on('click', d=>{
 
 //Create a global object that contains dimensions and groups, etc.
 
-var state = {}, initialised = false, searchterm_name = '', empfaenger, organisations_a, organisations, organisations_keys, searchterm_zweck = '', overall_count, overall_sum, amount, bin_borders, bin_count_borders, bin_sum_borders, dates_count, fund, all, all_groups, date, dates, names, zwecke, empfaenger_root, names_sum, names_count, postcode, postcodes_count, postcodes, politikbereich, politikbereichs, politikbereichs_count, geber, gebers, gebers_count, geber_jahre, gebers_jahre, gebers_jahre_count, politikbereich_jahre, politikbereichs_jahre, postcodeYears, postcodeYears_count, filter, sum_chart, art_chart, year_chart, map_chart, map_chart_years, table;
+var state = {}, initialised = false, searchterm_name = '', empfaenger, organisations_a, organisations, organisations_keys, searchterm_zweck = '', overall_count, overall_sum, amount, bin_borders, bin_count_borders, bin_sum_borders, dates_count, fund, all, all_groups, date, dates, names, zwecke, empfaenger_root, names_sum, names_count, postcode, postcodes_count, postcodes, politikbereich, politikbereichs, politikbereichs_count, geber, gebers, gebers_count, geber_jahre, gebers_jahre, gebers_jahre_count, politikbereich_jahre, politikbereichs_jahre, politikbereichs_jahre_count, postcodeYears, postcodeYears_count, filter, sum_chart, art_chart, year_chart, map_chart, map_chart_years, table;
 
 function updateFilter(){
   var changed = false;
