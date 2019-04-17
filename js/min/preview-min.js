@@ -1,1 +1,119 @@
-"use strict";var preview=function(t,e,n,a,r){var l={},c=r,o=a,u=t,i="betrag",s="ASC",f=e.allFiltered(),d=n,p=0;return l.init=function(){for(var t in l.sortData(),d){var e={};d[t].forEach(function(t){e[t.id]=t.label}),d[t]=e}l.update()},l.data=function(t){f=t.allFiltered(),l.sortData(),p=0,l.update()},l.sortData=function(){f.sort(function(t,e){var n=t,a=e;return"DESC"==s&&(n=e,a=t),a[i]==n[i]?a.jahr-n.jahr:a[i]-n[i]})},l.setSort=function(t){i==t&&(s="ASC"==s?"DESC":"ASC"),i=t,p=0,l.sortData(),l.update()},l.update=function(){c.selectAll(".th-label").classed("ASC",!1).classed("DESC",!1),c.select(".th-label.th-"+i).classed(s,!0),c.selectAll(".pagination span").text(40*p+1+" bis "+(40*(p+1)>f.length?f.length:40*(p+1))+" von "+f.length);var t=f.filter(function(t,e){return e>=40*p&&e<40*(p+1)});u.selectAll("tr").remove();var e=u.selectAll("tr").data(t).enter().append("tr");o.forEach(function(t){e.append("td").attr("class",t).datum(function(e){return e[t]}).html(function(e){return t in d?d[t][e]:"betrag"==t?currency(e):e})})},l.next=function(){Math.floor(f.length/40)>p&&p++,l.update()},l.prev=function(){p>0&&p--,l.update()},l};
+"use strict";
+
+var preview = function preview(_container, _data, _dicts, _columns, _table_root) {
+  var module = {},
+      table_root = _table_root,
+      columns = _columns,
+      container = _container,
+      sortKey = 'betrag',
+      sortDirection = 'ASC',
+      data = _data.allFiltered(),
+      dicts = _dicts,
+      page = 0,
+      perpage = 40;
+
+  module.init = function () {
+    module.sortData();
+
+    for (var key in dicts) {
+      var tdict = {};
+      dicts[key].forEach(function (d) {
+        tdict[d.id] = d.label;
+      });
+      dicts[key] = tdict;
+    }
+
+    module.update();
+  };
+
+  module.data = function (_data) {
+    data = _data.allFiltered();
+    module.sortData();
+    page = 0;
+    module.update();
+  };
+
+  module.sortData = function () {
+    data.sort(function (a, b) {
+      var aa = a,
+          bb = b;
+
+      if (sortDirection == 'DESC') {
+        aa = b;
+        bb = a;
+      }
+
+      if (bb[sortKey] == aa[sortKey]) return bb['jahr'] - aa['jahr'];
+      return bb[sortKey] - aa[sortKey];
+    });
+  };
+
+  module.setSort = function (_sortKey) {
+    if (sortKey == _sortKey) {
+      if (sortDirection == 'ASC') {
+        sortDirection = 'DESC';
+      } else {
+        sortDirection = 'ASC';
+      }
+    }
+
+    sortKey = _sortKey;
+    page = 0;
+    module.sortData();
+    module.update();
+  };
+
+  function formNum(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  module.update = function () {
+    table_root.selectAll('.th-label').classed('ASC', false).classed('DESC', false);
+    table_root.select('.th-label.th-' + sortKey).classed(sortDirection, true);
+    table_root.selectAll('.pagination span').text(page * perpage + 1 + ' bis ' + ((page + 1) * perpage > data.length ? data.length : (page + 1) * perpage) + ' von ' + data.length);
+    var tdata = data.filter(function (d, i) {
+      if (i >= page * perpage && i < (page + 1) * perpage) {
+        return true;
+      }
+
+      return false;
+    });
+    container.selectAll('tr').remove();
+    var rows = container.selectAll('tr').data(tdata).enter().append('tr');
+    columns.forEach(function (c) {
+      rows.append('td').attr('class', c).datum(function (d) {
+        return d[c];
+      }).html(function (d) {
+        if (c in dicts) {
+          return dicts[c][d];
+        }
+
+        if (c == 'betrag') {
+          return currency(d);
+        }
+
+        return d;
+      });
+    });
+  };
+
+  module.next = function () {
+    if (Math.floor(data.length / perpage) > page) {
+      page++;
+    }
+
+    module.update();
+  };
+
+  module.prev = function () {
+    if (page > 0) {
+      page--;
+    }
+
+    module.update();
+  };
+
+  return module;
+};
+
+//# sourceMappingURL=preview-min.js.map

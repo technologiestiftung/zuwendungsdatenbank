@@ -1,1 +1,121 @@
-"use strict";var previewLight=function(t,e,n,a,r){var l={},o=r,c=a,u=t,s="betrag",i="ASC",f=e,d=n,p=0;return l.init=function(){l.sortData(),l.update()},l.data=function(t){f=t,l.sortData(),p=0,l.update()},l.sortData=function(){console.log(i,s),f.sort(function(t,e){var n=t,a=e;return"DESC"==i&&(n=e,a=t),a[s],n[s],"name"==s?a[s]<n[s]?-1:a[s]>n[s]?1:0:a[s]-n[s]})},l.setSort=function(t){s==t&&(i="ASC"==i?"DESC":"ASC"),s=t,p=0,l.sortData(),l.update()},l.update=function(){o.selectAll(".th-label").classed("ASC",!1).classed("DESC",!1),o.select(".th-label.th-"+s).classed(i,!0),o.selectAll(".pagination span").text(40*p+1+" bis "+(40*(p+1)>f.length?f.length:40*(p+1))+" von "+f.length);var t=f.filter(function(t,e){return e>=40*p&&e<40*(p+1)});u.selectAll("tr").remove();var e=u.selectAll("tr").data(t).enter().append("tr");c.forEach(function(t){e.append("td").attr("class",t).datum(function(e){return e[t]}).html(function(e){return console.log(),t in d?d[t][e]:"betrag"==t||"sum"==t?currency(e):e})})},l.next=function(){Math.floor(f.length/40)>p&&p++,l.update()},l.prev=function(){p>0&&p--,l.update()},l};
+"use strict";
+
+var previewLight = function previewLight(_container, _data, _dicts, _columns, _table_root) {
+  var module = {},
+      table_root = _table_root,
+      columns = _columns,
+      container = _container,
+      sortKey = 'betrag',
+      sortDirection = 'ASC',
+      data = _data,
+      dicts = _dicts,
+      page = 0,
+      perpage = 40;
+
+  module.init = function () {
+    module.sortData();
+    module.update();
+  };
+
+  module.data = function (_data) {
+    data = _data;
+    module.sortData();
+    page = 0;
+    module.update();
+  };
+
+  module.sortData = function () {
+    console.log(sortDirection, sortKey);
+    data.sort(function (a, b) {
+      var aa = a,
+          bb = b;
+
+      if (sortDirection == 'DESC') {
+        aa = b;
+        bb = a;
+      }
+
+      if (bb[sortKey] == aa[sortKey]) {//sortKey = 'name'
+      }
+
+      if (sortKey == 'name') {
+        if (bb[sortKey] < aa[sortKey]) return -1;
+        if (bb[sortKey] > aa[sortKey]) return 1;
+        return 0;
+      } else {
+        return bb[sortKey] - aa[sortKey];
+      }
+    });
+  };
+
+  module.setSort = function (_sortKey) {
+    if (sortKey == _sortKey) {
+      if (sortDirection == 'ASC') {
+        sortDirection = 'DESC';
+      } else {
+        sortDirection = 'ASC';
+      }
+    }
+
+    sortKey = _sortKey;
+    page = 0;
+    module.sortData();
+    module.update();
+  };
+
+  function formNum(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  module.update = function () {
+    table_root.selectAll('.th-label').classed('ASC', false).classed('DESC', false);
+    table_root.select('.th-label.th-' + sortKey).classed(sortDirection, true);
+    table_root.selectAll('.pagination span').text(page * perpage + 1 + ' bis ' + ((page + 1) * perpage > data.length ? data.length : (page + 1) * perpage) + ' von ' + data.length);
+    var tdata = data.filter(function (d, i) {
+      if (i >= page * perpage && i < (page + 1) * perpage) {
+        return true;
+      }
+
+      return false;
+    });
+    container.selectAll('tr').remove();
+    var rows = container.selectAll('tr').data(tdata).enter().append('tr');
+    columns.forEach(function (c) {
+      rows.append('td').attr('class', c).datum(function (d) {
+        return d[c];
+      }).html(function (d) {
+        console.log();
+
+        if (c in dicts) {
+          return dicts[c][d];
+        }
+
+        if (c == 'betrag' || c == 'sum') {
+          return currency(d);
+        }
+
+        return d;
+      });
+    });
+  };
+
+  module.next = function () {
+    if (Math.floor(data.length / perpage) > page) {
+      page++;
+    }
+
+    module.update();
+  };
+
+  module.prev = function () {
+    if (page > 0) {
+      page--;
+    }
+
+    module.update();
+  };
+
+  return module;
+};
+
+//# sourceMappingURL=previewLight-min.js.map

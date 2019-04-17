@@ -1,1 +1,202 @@
-"use strict";var mapChart=function(t,e,a,n,l,o,r,p,s,c){var u={},i=c,d=s,v=p,f=t,h=a,y=n,g=[],b=o,m=r,x=l,k={},w=e,M={},z=f.append("svg").classed("mapChart",!0).attr("width",500).attr("height",400).attr("viewBox","0 0 500 400").attr("preserveAspectRatio","xMidYMid meet"),L=(z.append("defs").html('<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:rgba(11,138,221,0.1);stop-opacity:1" /><stop offset="100%" style="stop-color:rgba(11,138,221,1);stop-opacity:1" /></linearGradient>'),z.append("g")),A=z.append("g"),T=z.append("g"),Y=T.append("path").style("fill","url(#grad1)"),F=T.append("text").text("0 €").attr("dy",22).style("font-size",10),P=T.append("text").text(currency(h.top(1)[0].value).replace("&nbsp;"," ")).attr("dy",22).style("font-size",10).attr("text-anchor","end"),S=z.append("g"),X=S.append("text").attr("text-anchor","middle"),Z=(X.append("tspan").text("Summe (€)").attr("class","toggle sum").on("click",function(){Z="sum",u.update()}),X.append("tspan").text(" / "),X.append("tspan").text("Anzahl").attr("class","toggle count").on("click",function(){Z="count",u.update()}),X.append("tspan").text(" / "),X.append("tspan").text("Verhältnis Summe/Anzahl").attr("class","toggle ratio").on("click",function(){Z="ratio",u.update()}),"sum"),j=null,B=null,C=!0,E=d3.geoMercator().center([13.41,52.51]).scale(35e3).translate([250,200]),G=d3.scaleLinear().domain([0,Math.pow(h.top(1)[0].value,.25)]).range(["rgba(11,138,221,0.1)","rgba(11,138,221,1)"]),O=d3.scaleLinear().domain([0,Math.pow(y.top(1)[0].value,.25)]).range(["rgba(11,138,221,0.1)","rgba(11,138,221,1)"]),D=d3.scaleLinear().domain([0,Math.pow(d3.max(h.all(),function(t,e){return 0==y.all()[e].value||0==t.value?0:t.value/y.all()[e].value}),.25)]).range(["rgba(11,138,221,0.1)","rgba(11,138,221,1)"]),R=d3.geoPath().projection(E);return d&&(S.remove(),z.append("text").text(i).attr("transform","translate(75,65)").style("font-weight","bold").style("font-size","14px")),u.init=function(){w.features.forEach(function(t){M[t.properties.PLZ99]=t}),x.forEach(function(t){k[t.id]=t.label}),j=L.selectAll("path").data(h.all()).enter().append("path").attr("d",function(t){return k[t.key]in M?R(M[k[t.key]]):""}).style("stroke-width",.5).style("stroke","rgba(255,255,255,1)"),B=A.selectAll("path").data(h.all()).enter().append("path").style("fill","transparent").style("stroke-width","2").classed("overlays",!0).attr("d",function(t){return k[t.key]in M?R(M[k[t.key]]):""}).on("click",function(t,e){b(m,t.key),u.updateToolTip(d3.event.pageX,d3.event.pageY,t,e)}).on("mousemove",function(t){v.move({x:d3.event.pageX,y:d3.event.pageY})}).on("mouseover",function(t,e){u.updateToolTip(d3.event.pageX,d3.event.pageY,t,e)}).on("mouseout",function(t){v.hide()}),u.resize()},u.switchDisplayMode=function(t){Z=t,u.update()},u.updateToolTip=function(t,e,a,n){var l=!1;(0==g.length||g.indexOf(a.key)>-1)&&(l=!0),v.direction("horizontal"),v.show({title:9999999==k[a.key]?"Außerhalb von Berlin":"PLZ-".concat(k[a.key]),body:"Summe in €:<br /><i>".concat(currency(a.value))+(l?"&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;".concat((a.value/all.value()*100).toFixed(2),"%"):"")+"</i><br /><br />Anzahl Förderprojekte:<br /><i>".concat(y.all()[n].value)+(l?"&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;".concat((y.all()[n].value/all_groups.value()*100).toFixed(2),"%"):"")+"</i>",x:t,y:e})},u.update=function(){switch(z.classed("count",!1).classed("sum",!1).classed("ratio",!1).classed(Z,!0),j.transition().duration(C?0:500).style("fill",function(t,e){switch(Z){case"count":return O(Math.pow(y.all()[e].value,.25));case"sum":return G(Math.pow(t.value,.25));case"ratio":var a=0;return t.value>0&&y.all()[e].value>0&&(a=t.value/y.all()[e].value),D(Math.pow(a,.25))}}),B.classed("selected",function(t){return g.indexOf(t.key)>-1}),C=!1,Z){case"count":F.text("0"),P.text(y.top(1)[0].value);break;case"sum":F.text("0 €"),P.text(currency(h.top(1)[0].value).replace("&nbsp;"," "));break;case"ratio":F.text("0 €"),P.text(currency(Math.floor(d3.max(h.all(),function(t,e){return 0==y.all()[e].value||0==t.value?0:t.value/y.all()[e].value}))).replace("&nbsp;"," "))}},u.resize=function(){S.attr("transform","translate(".concat(250,",10)")),T.attr("transform","translate(".concat(125,",").concat(350,")")),Y.attr("d","M0,4L".concat(250,",0L").concat(250,",10L0,6Z")),P.attr("dx",250),u.update()},u.data=function(t,e,a){h=t,y=e,g=a,G.domain([0,Math.pow(h.top(1)[0].value,.25)]),O.domain([0,Math.pow(y.top(1)[0].value,.25)]),D.domain([0,Math.pow(d3.max(h.all(),function(t,e){return 0==y.all()[e].value||0==t.value?0:t.value/y.all()[e].value}),.25)]),u.update()},u.hide=function(){f.style("display","none")},u.show=function(){f.style("display","block")},u};
+"use strict";
+
+var mapChart = function mapChart(_container, _geojson, _data, _count_data, _dict, _filterFunction, _filterKey, _tooltip, _isMini, _theYear) {
+  var module = {},
+      theYear = _theYear,
+      isMini = _isMini,
+      tooltip = _tooltip,
+      container = _container,
+      data = _data,
+      count_data = _count_data,
+      filters = [],
+      filterFunction = _filterFunction,
+      filterKey = _filterKey,
+      dict = _dict,
+      dict_keys = {},
+      width = 500,
+      height = 400,
+      geojson = _geojson,
+      geokeys = {},
+      svg = container.append('svg').classed('mapChart', true).attr('width', width).attr('height', height).attr("viewBox", "0 0 " + width + " " + height).attr("preserveAspectRatio", "xMidYMid meet"),
+      defs = svg.append('defs').html('<linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">' + '<stop offset="0%" style="stop-color:rgba(11,138,221,0.1);stop-opacity:1" />' + '<stop offset="100%" style="stop-color:rgba(11,138,221,1);stop-opacity:1" />' + '</linearGradient>'),
+      map = svg.append('g'),
+      mapOverlay = svg.append('g'),
+      legend = svg.append('g'),
+      legend_rect = legend.append('path').style('fill', 'url(#grad1)'),
+      legend_txt1 = legend.append('text').text('0 €').attr('dy', 22).style('font-size', 10),
+      legend_txt2 = legend.append('text').text(currency(data.top(1)[0].value).replace('&nbsp;', ' ')).attr('dy', 22).style('font-size', 10).attr('text-anchor', 'end'),
+      toggle = svg.append('g'),
+      toggle_text = toggle.append('text').attr('text-anchor', 'middle'),
+      toggle_sum = toggle_text.append('tspan').text('Summe (€)').attr('class', 'toggle sum').on('click', function () {
+    display_mode = 'sum';
+    module.update();
+  }),
+      toggle_sep1 = toggle_text.append('tspan').text(' / '),
+      toggle_count = toggle_text.append('tspan').text('Anzahl').attr('class', 'toggle count').on('click', function () {
+    display_mode = 'count';
+    module.update();
+  }),
+      toggle_sep2 = toggle_text.append('tspan').text(' / '),
+      toggle_ratio = toggle_text.append('tspan').text('Verhältnis Summe/Anzahl').attr('class', 'toggle ratio').on('click', function () {
+    display_mode = 'ratio';
+    module.update();
+  }),
+      display_mode = 'sum',
+      polygons = null,
+      overlays = null,
+      init = true,
+      root = 1 / 4,
+      projection = d3.geoMercator().center([13.41, 52.51]).scale(35000).translate([width / 2, height / 2]),
+      color_sum = d3.scaleLinear().domain([0, Math.pow(data.top(1)[0].value, root)]).range(['rgba(11,138,221,0.1)', 'rgba(11,138,221,1)']),
+      color_count = d3.scaleLinear().domain([0, Math.pow(count_data.top(1)[0].value, root)]).range(['rgba(11,138,221,0.1)', 'rgba(11,138,221,1)']),
+      color_ratio = d3.scaleLinear().domain([0, Math.pow(d3.max(data.all(), function (d, di) {
+    if (count_data.all()[di].value == 0 || d.value == 0) return 0;
+    return d.value / count_data.all()[di].value;
+  }), root)]).range(['rgba(11,138,221,0.1)', 'rgba(11,138,221,1)']),
+      path = d3.geoPath().projection(projection);
+
+  if (isMini) {
+    toggle.remove();
+    svg.append('text').text(theYear).attr('transform', 'translate(75,65)').style('font-weight', 'bold').style('font-size', '14px');
+  }
+
+  module.init = function () {
+    geojson.features.forEach(function (f) {
+      geokeys[f.properties.PLZ99] = f;
+    });
+    dict.forEach(function (d) {
+      dict_keys[d.id] = d.label;
+    });
+    polygons = map.selectAll('path').data(data.all()).enter().append('path').attr('d', function (d) {
+      if (dict_keys[d.key] in geokeys) {
+        return path(geokeys[dict_keys[d.key]]);
+      }
+
+      return '';
+    }).style('stroke-width', 0.5).style('stroke', 'rgba(255,255,255,1)');
+    overlays = mapOverlay.selectAll('path').data(data.all()).enter().append('path').style('fill', 'transparent').style('stroke-width', '2').classed('overlays', true).attr('d', function (d) {
+      if (dict_keys[d.key] in geokeys) {
+        return path(geokeys[dict_keys[d.key]]);
+      }
+
+      return '';
+    }).on('click', function (d, di) {
+      filterFunction(filterKey, d.key);
+      module.updateToolTip(d3.event.pageX, d3.event.pageY, d, di);
+    }).on('mousemove', function (d) {
+      tooltip.move({
+        x: d3.event.pageX,
+        y: d3.event.pageY
+      });
+    }).on('mouseover', function (d, di) {
+      module.updateToolTip(d3.event.pageX, d3.event.pageY, d, di);
+    }).on('mouseout', function (d) {
+      tooltip.hide();
+    });
+    module.resize();
+  };
+
+  module.switchDisplayMode = function (_display_mode) {
+    display_mode = _display_mode;
+    module.update();
+  };
+
+  module.updateToolTip = function (x, y, d, di) {
+    var showPercentage = false;
+
+    if (filters.length == 0 || filters.indexOf(d.key) > -1) {
+      showPercentage = true;
+    }
+
+    tooltip.direction('horizontal');
+    tooltip.show({
+      title: dict_keys[d.key] == 9999999 ? "Au\xDFerhalb von Berlin" : "PLZ-".concat(dict_keys[d.key]),
+      body: "Summe in \u20AC:<br /><i>".concat(currency(d.value)) + (showPercentage ? "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;".concat((d.value / all.value() * 100).toFixed(2), "%") : '') + "</i><br /><br />Anzahl F\xF6rderprojekte:<br /><i>".concat(count_data.all()[di].value) + (showPercentage ? "&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;".concat((count_data.all()[di].value / all_groups.value() * 100).toFixed(2), "%") : '') + "</i>",
+      x: x,
+      y: y
+    });
+  };
+
+  module.update = function () {
+    svg.classed('count', false).classed('sum', false).classed('ratio', false).classed(display_mode, true);
+    polygons.transition().duration(init ? 0 : 500).style('fill', function (d, i) {
+      switch (display_mode) {
+        case 'count':
+          return color_count(Math.pow(count_data.all()[i].value, root));
+          break;
+
+        case 'sum':
+          return color_sum(Math.pow(d.value, root));
+          break;
+
+        case 'ratio':
+          var val = 0;
+          if (d.value > 0 && count_data.all()[i].value > 0) val = d.value / count_data.all()[i].value;
+          return color_ratio(Math.pow(val, root));
+          break;
+      }
+    });
+    overlays.classed('selected', function (d) {
+      if (filters.indexOf(d.key) > -1) {
+        return true;
+      }
+
+      return false;
+    });
+    init = false;
+
+    switch (display_mode) {
+      case 'count':
+        legend_txt1.text('0');
+        legend_txt2.text(count_data.top(1)[0].value);
+        break;
+
+      case 'sum':
+        legend_txt1.text('0 €');
+        legend_txt2.text(currency(data.top(1)[0].value).replace('&nbsp;', ' '));
+        break;
+
+      case 'ratio':
+        legend_txt1.text('0 €');
+        legend_txt2.text(currency(Math.floor(d3.max(data.all(), function (d, di) {
+          if (count_data.all()[di].value == 0 || d.value == 0) return 0;
+          return d.value / count_data.all()[di].value;
+        }))).replace('&nbsp;', ' '));
+        break;
+    }
+  };
+
+  module.resize = function () {
+    //width = container.node().offsetWidth;
+    toggle.attr('transform', "translate(".concat(width * 0.5, ",10)"));
+    legend.attr('transform', "translate(".concat(width * 0.25, ",").concat(height - 50, ")"));
+    legend_rect.attr('d', "M0,4L".concat(width * 0.5, ",0L").concat(width * 0.5, ",10L0,6Z"));
+    legend_txt2.attr('dx', width * 0.5);
+    module.update();
+  };
+
+  module.data = function (_data, _count_data, _filters) {
+    data = _data;
+    count_data = _count_data;
+    filters = _filters;
+    color_sum.domain([0, Math.pow(data.top(1)[0].value, root)]);
+    color_count.domain([0, Math.pow(count_data.top(1)[0].value, root)]);
+    color_ratio.domain([0, Math.pow(d3.max(data.all(), function (d, di) {
+      if (count_data.all()[di].value == 0 || d.value == 0) return 0;
+      return d.value / count_data.all()[di].value;
+    }), root)]);
+    module.update();
+  };
+
+  module.hide = function () {
+    container.style('display', 'none');
+  };
+
+  module.show = function () {
+    container.style('display', 'block');
+  };
+
+  return module;
+};
+
+//# sourceMappingURL=mapChart-min.js.map
