@@ -48,7 +48,7 @@ d3.select('#anti-search').on('click', d=>{
 
 //Create a global object that contains dimensions and groups, etc.
 
-var state = {}, initialised = false, searchterm_name = '', empfaenger, organisations_a, organisations, organisations_keys, searchterm_zweck = '', overall_count, overall_sum, amount, bin_borders, bin_count_borders, bin_sum_borders, dates_count, fund, all, all_groups, date, dates, names, names_sum, names_count, postcode, postcodes, politikbereich, politikbereichs, geber, gebers, geber_jahre, gebers_jahre, politikbereich_jahre, politikbereichs_jahre, postcodeYears, postcodeYears_count, filter, sum_chart, art_chart, year_chart, map_chart, map_chart_years, table;
+var state = {}, initialised = false, searchterm_name = '', empfaenger, organisations_a, organisations, organisations_keys, searchterm_zweck = '', overall_count, overall_sum, amount, bin_borders, bin_count_borders, bin_sum_borders, dates_count, fund, all, all_groups, date, dates, names, zwecke, empfaenger_root, names_sum, names_count, postcode, postcodes, politikbereich, politikbereichs, geber, gebers, geber_jahre, gebers_jahre, politikbereich_jahre, politikbereichs_jahre, postcodeYears, postcodeYears_count, filter, sum_chart, art_chart, year_chart, map_chart, map_chart_years, table;
 
 function updateFilter(){
   var changed = false;
@@ -408,7 +408,7 @@ function buildCrossFilter() {
 
         case 2:
 
-          var empfaenger_root = fund.dimension(function(d) { return d.empfaengerid; });
+          empfaenger_root = fund.dimension(function(d) { return d.empfaengerid; });
           empfaenger = empfaenger_root.group();
           names_sum = empfaenger_root.group().reduceSum(function(d) { return d.betrag; });
           names_count = empfaenger_root.group().reduceCount();
@@ -789,15 +789,15 @@ function updateCharts(){
 }
 
 var images = new Array()
-function preload() {
-    for (var i = 0; i < preload.arguments.length; i++) {
+function preload(img) {
+    for (var i = 0; i < img.length; i++) {
         images[i] = new Image()
-        images[i].src = './images/'+preload.arguments[i]+'.png'
+        images[i].src = './images/'+img[i]+'.png'
     }
 }
 
 preload(
-    "t-l@2x",
+    ["t-l@2x",
     "t-m@2x",
     "t-r@2x",
     "m-l@2x",
@@ -834,5 +834,5 @@ preload(
     "m-r-t@2x",
     "b-l-t@2x",
     "b-m-t@2x",
-    "b-r-t@2x"
+    "b-r-t@2x"]
 )
