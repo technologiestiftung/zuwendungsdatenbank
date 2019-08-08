@@ -24,6 +24,6 @@
     "http": "0.0.0",
     "proj4": "^2.4.4",
     "stopwords-de": "^0.2.0",
-    "string-similarity": "^1.2.0"
+    "string-similarity": "^3.0.0"
   }
 }
